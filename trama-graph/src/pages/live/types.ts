@@ -1,11 +1,20 @@
-export const GAS_KEYS = ["CO", "AL", "H2", "CH4", "LPG"] as const;
-
-export type GasKey = (typeof GAS_KEYS)[number];
-
 export type ChartPoint = {
   time: number;
-} & Record<GasKey, number>;
+  CO: number;
+  AL: number;
+  H2: number;
+  CH4: number;
+  LPG: number;
+};
 
-export type AlertItem = { time: string; gas: GasKey; value: number; threshold: number };
+export type AlertItem = { 
+  time: string; 
+  gas: string; 
+  value: number; 
+  threshold: number 
+};
 
-export type ActiveAlert = { gas: GasKey; value: number };
+export type ActiveAlert = { 
+  gas: string; 
+  value: number 
+};
