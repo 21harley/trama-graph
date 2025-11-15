@@ -1,17 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from "react";
 import GasChart from "./components/GasChart";
-import AlertPanel from "./components/AlertPanel";
 import ControlPanel from "./components/ControlPanel";
+import GasVisibilityPanel from "./components/GasVisibilityPanel";
+import ActiveAlertsPanel from "./components/ActiveAlertsPanel";
 import ThresholdControl from "./components/ThresholdControl";
+import { useLiveStore } from "./store";
 import type { ChartPoint, AlertItem, ActiveAlert } from "./types";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const WINDOW_TIME = 30;
-const DEFAULT_THRESHOLD = 20000;
 
 export default function LivePage() {
   const portRef = useRef<SerialPort | null>(null);
-  const readerRef = useRef<ReadableStreamDefaultReader<string> | null>(null);
+  const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
+
   const startTimeRef = useRef<number | null>(null);
   const bufferRef = useRef<ChartPoint[]>([]);
   const textBufferRef = useRef<string>("");
@@ -23,25 +27,16 @@ export default function LivePage() {
     CH4: false,
     LPG: false,
   });
+  const textDecoderRef = useRef<TextDecoder | null>(null);
 
-  const [threshold, setThreshold] = useState<number>(() => {
-    const saved = localStorage.getItem("gasThreshold");
-    return saved ? Number(saved) : DEFAULT_THRESHOLD;
-  });
+  const threshold = useLiveStore((state) => state.threshold);
+  const alerts = useLiveStore((state) => state.alerts);
+  const setAlerts = useLiveStore((state) => state.setAlerts);
+  const setActiveAlerts = useLiveStore((state) => state.setActiveAlerts);
+  const visibleGases = useLiveStore((state) => state.visibleGases);
+  const resetAlertsState = useLiveStore((state) => state.resetAlertsState);
+
   const [data, setData] = useState<ChartPoint[]>([]);
-  const [pendingThreshold, setPendingThreshold] = useState<number>(threshold);
-  const [alerts, setAlerts] = useState<AlertItem[]>(() => {
-    const saved = localStorage.getItem("gasAlerts");
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [activeAlerts, setActiveAlerts] = useState<ActiveAlert[]>([]);
-  const [visibleGases, setVisibleGases] = useState<Record<string, boolean>>({
-    CO: true,
-    AL: true,
-    H2: true,
-    CH4: true,
-    LPG: true,
-  });
 
   const maxTime = data.length ? data[data.length - 1].time : WINDOW_TIME;
   const minTime = Math.max(0, maxTime - WINDOW_TIME);
@@ -85,15 +80,8 @@ export default function LivePage() {
 
   const pushAlert = (timeStr: string, gas: string, value: number, thresholdVal: number) => {
     const item: AlertItem = { time: timeStr, gas, value, threshold: thresholdVal };
-    setAlerts((prev) => {
-      const next = [...prev, item];
-      try {
-        localStorage.setItem("gasAlerts", JSON.stringify(next));
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
+    const next = [...alerts, item];
+    setAlerts(next);
 
     const line = `[${timeStr}] ALARMA → ${gas}: ${value} > ${thresholdVal}`;
     logsRef.current.push(line);
@@ -102,6 +90,10 @@ export default function LivePage() {
     } catch {
       /* ignore */
     }
+
+    toast.warning(`⚠️ ${gas} superó el umbral (${value.toFixed(0)} > ${thresholdVal})`, {
+      position: "bottom-right",
+    });
   };
 
   const downloadLogs = () => {
@@ -122,15 +114,13 @@ export default function LivePage() {
   };
 
   const readSerial = async (port: SerialPort) => {
-    const textDecoder = new TextDecoderStream();
     const readable = port.readable as ReadableStream<Uint8Array> | null;
-    if (readable) {
-      readable
-        .pipeTo(textDecoder.writable as WritableStream<Uint8Array>)
-        .catch((err) => console.error("Error en tubería serial:", err));
-    }
-    const reader = textDecoder.readable.getReader();
+    if (!readable) return;
+
+    const reader = readable.getReader();
     readerRef.current = reader;
+    const textDecoder = new TextDecoder();
+    textDecoderRef.current = textDecoder;
 
     try {
       while (true) {
@@ -138,7 +128,8 @@ export default function LivePage() {
         if (done) break;
         if (!value) continue;
 
-        textBufferRef.current += value;
+        const chunkText = textDecoder.decode(value, { stream: true });
+        textBufferRef.current += chunkText;
         const lines = textBufferRef.current.split("\n");
         textBufferRef.current = lines.pop() || "";
 
@@ -171,7 +162,6 @@ export default function LivePage() {
           const now = Date.now();
           const time = (now - (startTimeRef.current ?? now)) / 1000;
           const gases: Record<string, number> = { CO, AL, H2, CH4, LPG };
-          const currentlyActive: ActiveAlert[] = [];
 
           Object.entries(gases).forEach(([gas, value]) => {
             const overThreshold = value > threshold;
@@ -185,13 +175,13 @@ export default function LivePage() {
             if (!overThreshold && alertFlagsRef.current[gas]) {
               alertFlagsRef.current[gas] = false;
             }
-
-            if (overThreshold) {
-              currentlyActive.push({ gas, value });
-            }
           });
 
-          setActiveAlerts(currentlyActive);
+          const activeList: ActiveAlert[] = Object.entries(gases)
+            .filter(([, value]) => value > threshold)
+            .map(([gas, value]) => ({ gas, value }));
+
+          setActiveAlerts(activeList);
 
           bufferRef.current.push({
             time,
@@ -205,11 +195,17 @@ export default function LivePage() {
       }
     } catch (err) {
       console.error("Error leyendo serial:", err);
+    } finally {
+      reader.releaseLock();
+      if (readerRef.current === reader) {
+        readerRef.current = null;
+      }
     }
   };
 
   const connectArduino = async () => {
     try {
+      resetSimulation();
       const port = await navigator.serial.requestPort();
       await port.open({ baudRate: 115200 });
       portRef.current = port;
@@ -223,13 +219,25 @@ export default function LivePage() {
   const disconnectArduino = async () => {
     try {
       if (readerRef.current) {
-        await readerRef.current.cancel();
-        readerRef.current = null;
+        try {
+          await readerRef.current.cancel();
+        } catch {
+          // ignore cancel errors
+        } finally {
+          if (readerRef.current && (readerRef.current as any).releaseLock) {
+            (readerRef.current as any).releaseLock();
+          }
+          readerRef.current = null;
+        }
       }
+
       if (portRef.current) {
         await portRef.current.close();
         portRef.current = null;
       }
+
+      textDecoderRef.current = null;
+      resetSimulation();
     } catch (err) {
       console.error("Error al desconectar:", err);
     }
@@ -240,8 +248,8 @@ export default function LivePage() {
     bufferRef.current = [];
     textBufferRef.current = "";
     startTimeRef.current = Date.now();
-    setAlerts([]);
-    setActiveAlerts([]);
+    resetAlertsState();
+
     logsRef.current = [];
     try {
       localStorage.removeItem("gasAlerts");
@@ -251,50 +259,30 @@ export default function LivePage() {
     }
   };
 
-  const updateThreshold = () => {
-    setThreshold(pendingThreshold);
-    localStorage.setItem("gasThreshold", String(pendingThreshold));
-  };
-
-  const toggleGasVisibility = (gas: string) => {
-    setVisibleGases(prev => ({
-      ...prev,
-      [gas]: !prev[gas]
-    }));
-  };
-
   return (
     <div className="w-[100%] grid place-items-center ">
       <div className="w-[95%]">
-        <ControlPanel 
-        onDownloadLogs={downloadLogs}
-        onConnectArduino={connectArduino}
-        onDisconnectArduino={disconnectArduino}
-        onResetSimulation={resetSimulation}
-        isConnected={!!portRef.current}
-      />
-      
-      <GasChart
-        data={data}
-        minTime={minTime}
-        maxTime={maxTime}
-        visibleGases={visibleGases}
-      />
-      <div style={{ display: "flex", gap: "15px", flexWrap: "wrap" }}>
-      <ThresholdControl
-        pendingThreshold={pendingThreshold}
-        setPendingThreshold={setPendingThreshold}
-        threshold={threshold}
-        onUpdateThreshold={updateThreshold}
-      />
+        <ControlPanel
+          onDownloadLogs={downloadLogs}
+          onConnectArduino={connectArduino}
+          onDisconnectArduino={disconnectArduino}
+          onResetSimulation={resetSimulation}
+          isConnected={!!portRef.current}
+        />
 
-      <AlertPanel 
-        activeAlerts={activeAlerts}
-        visibleGases={visibleGases}
-        onToggleGasVisibility={toggleGasVisibility}
-      />
+        <GasChart
+          data={data}
+          minTime={minTime}
+          maxTime={maxTime}
+          visibleGases={visibleGases}
+        />
+        
+        <div style={{ display: "flex", gap: "15px", flexWrap: "wrap" }}>
+         <ThresholdControl /> 
+        <GasVisibilityPanel />
+        </div>
 
-      </div>
+        <ToastContainer position="bottom-right" autoClose={3000} />
       </div>
     </div>
   );

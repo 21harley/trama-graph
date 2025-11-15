@@ -26,7 +26,16 @@ export const gasColors: Record<string, string> = {
 
 export default function GasChart({ data, minTime, maxTime, visibleGases }: GasChartProps) {
   return (
-    <div style={{ marginLeft: 20, width: "90%", height: "80%", display:"grid",placeItems:"center",marginTop:"20px"}}>
+    <div
+      style={{
+        marginLeft: 20,
+        width: "90%",
+        height: "80%",
+        display: "grid",
+        placeItems: "center",
+        marginTop: "20px",
+      }}
+    >
       <ResponsiveContainer width="100%" aspect={2.5}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />

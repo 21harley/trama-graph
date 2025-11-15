@@ -1,18 +1,17 @@
-interface ThresholdControlProps {
-  pendingThreshold: number;
-  setPendingThreshold: (value: number) => void;
-  threshold: number;
-  onUpdateThreshold: () => void;
-}
+import { useLiveStore } from "../store";
 
-export default function ThresholdControl({
-  pendingThreshold,
-  setPendingThreshold,
-  threshold,
-  onUpdateThreshold,
-}: ThresholdControlProps) {
+export default function ThresholdControl() {
+  const threshold = useLiveStore((s) => s.threshold);
+  const pendingThreshold = useLiveStore((s) => s.pendingThreshold);
+  const setPendingThreshold = useLiveStore((s) => s.setPendingThreshold);
+  const setThreshold = useLiveStore((s) => s.setThreshold);
+
+  const handleUpdate = () => {
+    setThreshold(pendingThreshold);
+  };
+
   return (
-    <div style={{ display: "flex flex-col", marginLeft: 20 }}>
+    <div style={{ display: "flex", flexDirection: "column", marginLeft: 20 }}>
       <div style={{ paddingBlock: "20px", display: "flex", flexDirection: "column" }}>
         <label>Valor máximo permitido:</label>
         <div>
@@ -22,7 +21,7 @@ export default function ThresholdControl({
             value={pendingThreshold}
             onChange={(e) => setPendingThreshold(Number(e.target.value))}
           />
-          <button disabled={threshold === pendingThreshold} onClick={onUpdateThreshold}>
+          <button disabled={threshold === pendingThreshold} onClick={handleUpdate}>
             Actualizar umbral
           </button>
         </div>
