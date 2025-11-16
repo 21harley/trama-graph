@@ -33,12 +33,12 @@ api-trama-graph/
 
 ## Requerimientos
 
-| Componente            | Versión recomendada | Notas |
-| --------------------- | ------------------- | ----- |
-| Node.js               | 20.x o superior      | Se utiliza ES2022 y `node:net` para detección de puertos. |
-| npm                   | 9.x o superior       | Administrador de paquetes por defecto con Node 20. |
-| PostgreSQL            | 14 o superior        | Requerido por Prisma. Ajusta la URL de conexión en `.env`. |
-| Git                   | Cualquier versión actual | Para clonar el repositorio. |
+| Componente | Versión recomendada      | Notas                                                      |
+| ---------- | ------------------------ | ---------------------------------------------------------- |
+| Node.js    | 20.x o superior          | Se utiliza ES2022 y `node:net` para detección de puertos.  |
+| npm        | 9.x o superior           | Administrador de paquetes por defecto con Node 20.         |
+| PostgreSQL | 14 o superior            | Requerido por Prisma. Ajusta la URL de conexión en `.env`. |
+| Git        | Cualquier versión actual | Para clonar el repositorio.                                |
 
 Variables de entorno necesarias (`.env` en la raíz del paquete):
 
@@ -74,6 +74,7 @@ ENABLE_GESTION_SNAPSHOT_CRON=true  # opcional, activa cron diario
    ```bash
    npx prisma migrate dev    # aplica migraciones y genera tipados
    npx prisma db seed        # opcional: carga datos de ejemplo (usa prisma/seed.ts)
+   npx prisma generate
    ```
 
 5. **Ejecutar el servidor en desarrollo**
@@ -98,14 +99,14 @@ ENABLE_GESTION_SNAPSHOT_CRON=true  # opcional, activa cron diario
 
 ### Scripts útiles
 
-| Comando                 | Descripción |
-| ----------------------- | ----------- |
-| `npm run dev`           | Ejecuta `src/server.ts` con `ts-node-dev` (recarga en caliente). |
-| `npm run build`         | Compila TypeScript a `dist/` usando `tsc`. |
-| `npm start`             | Levanta el servidor compilado (`dist/server.js`). |
-| `npm run prisma:migrate`| `prisma migrate dev`: aplica migraciones. |
-| `npm run prisma:generate` | Genera el cliente Prisma. |
-| `npm run prisma:seed`   | Ejecuta `prisma/seed.ts` via `ts-node`. |
+| Comando                   | Descripción                                                      |
+| ------------------------- | ---------------------------------------------------------------- |
+| `npm run dev`             | Ejecuta `src/server.ts` con `ts-node-dev` (recarga en caliente). |
+| `npm run build`           | Compila TypeScript a `dist/` usando `tsc`.                       |
+| `npm start`               | Levanta el servidor compilado (`dist/server.js`).                |
+| `npm run prisma:migrate`  | `prisma migrate dev`: aplica migraciones.                        |
+| `npm run prisma:generate` | Genera el cliente Prisma.                                        |
+| `npm run prisma:seed`     | Ejecuta `prisma/seed.ts` via `ts-node`.                          |
 
 ---
 
@@ -113,17 +114,17 @@ ENABLE_GESTION_SNAPSHOT_CRON=true  # opcional, activa cron diario
 
 Prefijo común: `http://<host>:<puerto>/api/v1`
 
-| Método | Ruta                                      | Descripción                                                              | Parámetros / Cuerpo | Respuesta exitosa |
-| ------ | ----------------------------------------- | ------------------------------------------------------------------------ | ------------------- | ----------------- |
-| GET    | `/health`                                 | Diagnóstico del servidor (sin prefijo).                                 | —                   | `200 OK` `{ "status": "ok", "timestamp": "ISO", "environment": "development" }` |
-| GET    | `/test-connection`                        | Prueba simple de conectividad (sin prefijo).                            | —                   | `200 OK` `{ "status": "ok", "timestamp": "ISO" }` |
-| GET    | `/measurements`                           | Lista mediciones filtrables por gas y rango de fechas.                   | Query opcionales: `gasId`, `start`, `end` (ISO). | `200 OK` `{ "data": [ { "id": 1, "idTipoGas": 1, "valor": "123.000", "umbral": "950.000", "fechaMedida": "ISO", "tipoDeGas": { ... } } ] }` |
-| PUT    | `/measurements`                           | Sincroniza mediciones actuales (mismo filtro que GET).                   | Query opcionales iguales al GET. | `200 OK` `{ "data": [...] }` |
-| POST   | `/measurements/batch`                     | Registra mediciones que superen su umbral.                              | Cuerpo `[{ id_type_gas, valor, fecha, umbral }, ...]` validado por Zod. | `201 Created` `{ "message": "Mediciones registradas", "data": { "inserted": 5, "alarmsTriggered": 5 } }` |
-| PUT    | `/measurements/:id`                       | **Reservado** para futuras actualizaciones (reutiliza controlador PUT). | Parámetros de ruta: `id` (numérico). | Actualmente responde igual a GET según filtros. |
-| DELETE | `/measurements/:id`                       | Elimina una medición y actualiza alarmas relacionadas.                  | Parámetro de ruta `id` (numérico). | `204 No Content` |
-| GET    | `/alarms`                                 | Lista alarmas con filtros y permite generar snapshot de gestión.        | Query opcionales: `gasId`, `start`, `end`, `states`, `registerGenerate`, `includeAlarmList`. | `200 OK` `{ "data": [ { "id": 10, "estado": "abierta", "nMedidas": 3, "tipoDeGas": { ... } } ], "gestionSnapshot": null }` |
-| DELETE | `/alarms/:id`                             | Elimina una alarma existente.                                           | Parámetro de ruta `id` (numérico). | `204 No Content` |
+| Método | Ruta                  | Descripción                                                             | Parámetros / Cuerpo                                                                          | Respuesta exitosa                                                                                                                           |
+| ------ | --------------------- | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/health`             | Diagnóstico del servidor (sin prefijo).                                 | —                                                                                            | `200 OK` `{ "status": "ok", "timestamp": "ISO", "environment": "development" }`                                                             |
+| GET    | `/test-connection`    | Prueba simple de conectividad (sin prefijo).                            | —                                                                                            | `200 OK` `{ "status": "ok", "timestamp": "ISO" }`                                                                                           |
+| GET    | `/measurements`       | Lista mediciones filtrables por gas y rango de fechas.                  | Query opcionales: `gasId`, `start`, `end` (ISO).                                             | `200 OK` `{ "data": [ { "id": 1, "idTipoGas": 1, "valor": "123.000", "umbral": "950.000", "fechaMedida": "ISO", "tipoDeGas": { ... } } ] }` |
+| PUT    | `/measurements`       | Sincroniza mediciones actuales (mismo filtro que GET).                  | Query opcionales iguales al GET.                                                             | `200 OK` `{ "data": [...] }`                                                                                                                |
+| POST   | `/measurements/batch` | Registra mediciones que superen su umbral.                              | Cuerpo `[{ id_type_gas, valor, fecha, umbral }, ...]` validado por Zod.                      | `201 Created` `{ "message": "Mediciones registradas", "data": { "inserted": 5, "alarmsTriggered": 5 } }`                                    |
+| PUT    | `/measurements/:id`   | **Reservado** para futuras actualizaciones (reutiliza controlador PUT). | Parámetros de ruta: `id` (numérico).                                                         | Actualmente responde igual a GET según filtros.                                                                                             |
+| DELETE | `/measurements/:id`   | Elimina una medición y actualiza alarmas relacionadas.                  | Parámetro de ruta `id` (numérico).                                                           | `204 No Content`                                                                                                                            |
+| GET    | `/alarms`             | Lista alarmas con filtros y permite generar snapshot de gestión.        | Query opcionales: `gasId`, `start`, `end`, `states`, `registerGenerate`, `includeAlarmList`. | `200 OK` `{ "data": [ { "id": 10, "estado": "abierta", "nMedidas": 3, "tipoDeGas": { ... } } ], "gestionSnapshot": null }`                  |
+| DELETE | `/alarms/:id`         | Elimina una alarma existente.                                           | Parámetro de ruta `id` (numérico).                                                           | `204 No Content`                                                                                                                            |
 
 ### Notas sobre parámetros
 - Los filtros de fecha aceptan formatos compatibles con `new Date()` (ISO 8601 recomendado).
