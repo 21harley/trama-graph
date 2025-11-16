@@ -78,6 +78,7 @@ ENABLE_GESTION_SNAPSHOT_CRON=true  # opcional, activa cron diario
 
 5. **Ejecutar el servidor en desarrollo**
    ```bash
+   npx prisma generate
    npm run dev
    ```
    El servicio queda accesible en `http://localhost:3000` por defecto (o el puerto disponible registrado en el log).
