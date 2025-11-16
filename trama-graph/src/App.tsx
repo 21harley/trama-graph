@@ -4,7 +4,7 @@ import Layout from "./core/components/Layout.tsx";
 import LoaderPage from "./pages/LoaderPage.tsx";
 import LivePage from "./pages/live/index.tsx";
 import LivePages from "./pages/LivePage.tsx";
-import RegistroPage from "./pages/RegistroPage.tsx";
+import RegistroPage from "./pages/registro/index.tsx";
 
 export default function App() {
   return (

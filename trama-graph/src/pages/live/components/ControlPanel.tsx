@@ -1,12 +1,13 @@
-import ActiveAlertsPanel from "./ActiveAlertsPanel";
+import React from "react";
 
-interface ControlPanelProps {
+type ControlPanelProps = {
   onDownloadLogs: () => void;
   onConnectArduino: () => void;
   onDisconnectArduino: () => void;
   onResetSimulation: () => void;
   isConnected: boolean;
-}
+  showDownloadButton?: boolean;
+};
 
 export default function ControlPanel({
   onDownloadLogs,
@@ -14,6 +15,7 @@ export default function ControlPanel({
   onDisconnectArduino,
   onResetSimulation,
   isConnected,
+  showDownloadButton = false,
 }: ControlPanelProps) {
   const buttonStyle: React.CSSProperties = {
     padding: "6px 12px",
@@ -62,12 +64,16 @@ export default function ControlPanel({
           />
         </div>
 
-        <button
-          onClick={onDownloadLogs}
-          style={{ ...buttonStyle, marginRight: 20 }}
-        >
-          Descargar registro
-        </button>
+        {showDownloadButton ? (
+          <button
+            onClick={onDownloadLogs}
+            style={{ ...buttonStyle, marginRight: 20 }}
+          >
+            Descargar registro
+          </button>
+        ) : (
+          <div style={{ width: 140, height: 32, marginRight: 20 }} />
+        )}
       </div>
 
       <div

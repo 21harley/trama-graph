@@ -1,16 +1,32 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import GasChart from "./components/GasChart";
 import ControlPanel from "./components/ControlPanel";
 import GasVisibilityPanel from "./components/GasVisibilityPanel";
 import ActiveAlertsPanel from "./components/ActiveAlertsPanel";
 import ThresholdControl from "./components/ThresholdControl";
-import { useLiveStore } from "./store";
+import { useLiveStore, GAS_KEYS, DEFAULT_THRESHOLD, type GasKey } from "./store";
+
 import type { ChartPoint, AlertItem, ActiveAlert } from "./types";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const WINDOW_TIME = 30;
+
+type MeasurementPayload = {
+  id_type_gas: number;
+  valor: number;
+  fecha: string;
+  umbral: number;
+};
+
+const GAS_ID_MAP: Record<string, number> = {
+  CO: 1,
+  AL: 2,
+  H2: 3,
+  CH4: 4,
+  LPG: 5,
+};
 
 export default function LivePage() {
   const portRef = useRef<SerialPort | null>(null);
@@ -20,21 +36,25 @@ export default function LivePage() {
   const bufferRef = useRef<ChartPoint[]>([]);
   const textBufferRef = useRef<string>("");
   const logsRef = useRef<string[]>([]);
-  const alertFlagsRef = useRef<Record<string, boolean>>({
-    CO: false,
-    AL: false,
-    H2: false,
-    CH4: false,
-    LPG: false,
-  });
+  const alertFlagsRef = useRef<Record<string, boolean>>(
+    GAS_KEYS.reduce((acc, gas) => {
+      acc[gas] = false;
+      return acc;
+    }, {} as Record<string, boolean>)
+  );
   const textDecoderRef = useRef<TextDecoder | null>(null);
 
-  const threshold = useLiveStore((state) => state.threshold);
   const alerts = useLiveStore((state) => state.alerts);
   const setAlerts = useLiveStore((state) => state.setAlerts);
   const setActiveAlerts = useLiveStore((state) => state.setActiveAlerts);
   const visibleGases = useLiveStore((state) => state.visibleGases);
   const resetAlertsState = useLiveStore((state) => state.resetAlertsState);
+  const thresholds = useLiveStore((state) => state.thresholds);
+  const alarmEnabled = useLiveStore((state) => state.alarmEnabled);
+  const backendBlocked = useLiveStore((state) => state.backendBlocked);
+  const incrementBackendFailure = useLiveStore((state) => state.incrementBackendFailure);
+  const resetBackendFailure = useLiveStore((state) => state.resetBackendFailure);
+  const backendFailures = useLiveStore((state) => state.backendFailures);
 
   const [data, setData] = useState<ChartPoint[]>([]);
 
@@ -78,8 +98,47 @@ export default function LivePage() {
     return () => clearInterval(interval);
   }, []);
 
+  const disconnectArduino = async () => {
+    try {
+      if (readerRef.current) {
+        try {
+          await readerRef.current.cancel();
+        } catch {
+          // ignore cancel errors
+        } finally {
+          if (readerRef.current && (readerRef.current as any).releaseLock) {
+            (readerRef.current as any).releaseLock();
+          }
+          readerRef.current = null;
+        }
+      }
+
+      if (portRef.current) {
+        await portRef.current.close();
+        portRef.current = null;
+      }
+
+      textDecoderRef.current = null;
+      resetSimulation();
+    } catch (err) {
+      console.error("Error al desconectar:", err);
+    }
+  };
+
+  useEffect(() => {
+    const handleDisconnect = () => {
+      void disconnectArduino();
+    };
+
+    window.addEventListener("trama:disconnect-arduino", handleDisconnect);
+    return () => {
+      window.removeEventListener("trama:disconnect-arduino", handleDisconnect);
+    };
+  }, [disconnectArduino]);
+
   const pushAlert = (timeStr: string, gas: string, value: number, thresholdVal: number) => {
     const item: AlertItem = { time: timeStr, gas, value, threshold: thresholdVal };
+
     const next = [...alerts, item];
     setAlerts(next);
 
@@ -113,6 +172,26 @@ export default function LivePage() {
     URL.revokeObjectURL(a.href);
   };
 
+  const sendMeasurements = useCallback(async (batch: MeasurementPayload[]) => {
+    if (batch.length === 0 || backendBlocked) {
+      return;
+    }
+
+    try {
+      await fetch("http://localhost:3000/api/v1/measurements/batch", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(batch),
+      });
+      resetBackendFailure();
+    } catch (error) {
+      console.error("Error enviando mediciones al backend:", error);
+      incrementBackendFailure();
+    }
+  }, [backendBlocked, incrementBackendFailure, resetBackendFailure]);
+
   const readSerial = async (port: SerialPort) => {
     const readable = port.readable as ReadableStream<Uint8Array> | null;
     if (!readable) return;
@@ -132,6 +211,8 @@ export default function LivePage() {
         textBufferRef.current += chunkText;
         const lines = textBufferRef.current.split("\n");
         textBufferRef.current = lines.pop() || "";
+
+        const batch: MeasurementPayload[] = [];
 
         for (const line of lines) {
           const parts = line.trim().split(",");
@@ -164,21 +245,29 @@ export default function LivePage() {
           const gases: Record<string, number> = { CO, AL, H2, CH4, LPG };
 
           Object.entries(gases).forEach(([gas, value]) => {
-            const overThreshold = value > threshold;
+            const gasKey = gas as GasKey;
+            const gasThreshold = thresholds[gasKey] ?? DEFAULT_THRESHOLD;
+            const isAlarmEnabled = alarmEnabled[gasKey] !== false;
+            const overThreshold = isAlarmEnabled && value > gasThreshold;
 
             if (overThreshold && !alertFlagsRef.current[gas]) {
               const timeStr = new Date().toLocaleString();
-              pushAlert(timeStr, gas, value, threshold);
+              pushAlert(timeStr, gas, value, gasThreshold);
               alertFlagsRef.current[gas] = true;
             }
 
-            if (!overThreshold && alertFlagsRef.current[gas]) {
+            if ((!overThreshold || !isAlarmEnabled) && alertFlagsRef.current[gas]) {
               alertFlagsRef.current[gas] = false;
             }
           });
 
           const activeList: ActiveAlert[] = Object.entries(gases)
-            .filter(([, value]) => value > threshold)
+            .filter(([gas, value]) => {
+              const gasKey = gas as GasKey;
+              const gasThreshold = thresholds[gasKey] ?? DEFAULT_THRESHOLD;
+              const isAlarmEnabled = alarmEnabled[gasKey] !== false;
+              return isAlarmEnabled && value > gasThreshold;
+            })
             .map(([gas, value]) => ({ gas, value }));
 
           setActiveAlerts(activeList);
@@ -191,6 +280,33 @@ export default function LivePage() {
             CH4,
             LPG,
           });
+
+          const timestamp = new Date().toISOString();
+          const gasEntries: Array<[string, number]> = [
+            ["CO", CO],
+            ["AL", AL],
+            ["H2", H2],
+            ["CH4", CH4],
+            ["LPG", LPG],
+          ];
+
+          for (const [gasKey, value] of gasEntries) {
+            const gasId = GAS_ID_MAP[gasKey];
+            if (!gasId) continue;
+
+            const thresholdValue = thresholds[gasKey as GasKey] ?? DEFAULT_THRESHOLD;
+
+            batch.push({
+              id_type_gas: gasId,
+              valor: value,
+              fecha: timestamp,
+              umbral: thresholdValue,
+            });
+          }
+        }
+
+        if (batch.length > 0) {
+          void sendMeasurements(batch);
         }
       }
     } catch (err) {
@@ -208,38 +324,12 @@ export default function LivePage() {
       resetSimulation();
       const port = await navigator.serial.requestPort();
       await port.open({ baudRate: 115200 });
+
       portRef.current = port;
       startTimeRef.current = Date.now();
       readSerial(port);
     } catch (err) {
       console.error("Error al conectar Arduino:", err);
-    }
-  };
-
-  const disconnectArduino = async () => {
-    try {
-      if (readerRef.current) {
-        try {
-          await readerRef.current.cancel();
-        } catch {
-          // ignore cancel errors
-        } finally {
-          if (readerRef.current && (readerRef.current as any).releaseLock) {
-            (readerRef.current as any).releaseLock();
-          }
-          readerRef.current = null;
-        }
-      }
-
-      if (portRef.current) {
-        await portRef.current.close();
-        portRef.current = null;
-      }
-
-      textDecoderRef.current = null;
-      resetSimulation();
-    } catch (err) {
-      console.error("Error al desconectar:", err);
     }
   };
 
@@ -268,6 +358,7 @@ export default function LivePage() {
           onDisconnectArduino={disconnectArduino}
           onResetSimulation={resetSimulation}
           isConnected={!!portRef.current}
+          showDownloadButton={!backendBlocked || backendFailures >= 5}
         />
 
         <GasChart
@@ -276,11 +367,13 @@ export default function LivePage() {
           maxTime={maxTime}
           visibleGases={visibleGases}
         />
-        
-        <div style={{ display: "flex", gap: "15px", flexWrap: "wrap" }}>
-         <ThresholdControl /> 
-        <GasVisibilityPanel />
+
+        <div style={{ display: "flex", gap: "15px", flexWrap: "wrap", justifyContent:"center" }}>
+          <ThresholdControl />
+          <GasVisibilityPanel />
         </div>
+
+        <ActiveAlertsPanel />
 
         <ToastContainer position="bottom-right" autoClose={3000} />
       </div>

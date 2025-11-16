@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model TipoDeGases {
+  id             Int         @id @default(autoincrement())
+  nombre         String
+  formulaQuimica String
+  unidadMedida   String?
+  codigoSensor   String?
+
+  mediciones     Medicion[]
+  alarmas        Alarma[]
+}
+
+model Medicion {
+  id            Int          @id @default(autoincrement())
+  fechaMedida   DateTime
+  valor         Decimal      @db.Decimal(10, 3)
+  umbral        Decimal      @db.Decimal(10, 3)
+  ubicacion     String?
+  origen        String?
+
+  tipoDeGas     TipoDeGases  @relation(fields: [idTipoGas], references: [id])
+  idTipoGas     Int
+
+  @@index([idTipoGas, fechaMedida(sort: Desc)])
+}
+
+model Alarma {
+  id               Int          @id @default(autoincrement())
+  idTipoGas        Int
+  nMedidas         Int
+  listaIdMedidas   Int[]
+  estado           String       @default("abierta")
+  umbralReferencia Decimal?     @db.Decimal(10, 3)
+  creadaEn         DateTime     @default(now())
+  actualizadaEn    DateTime     @updatedAt
+
+  tipoDeGas        TipoDeGases  @relation(fields: [idTipoGas], references: [id])
+
+  @@index([idTipoGas, estado])
+}
+
+model GestionAlarmas {
+  id                Int      @id @default(autoincrement())
+  fechaReferencia   DateTime
+  totalActivaciones Int
+  conteoPorGas      Json
+  listaAlarmas      Json?
+  generadoEn        DateTime @default(now())
+
+  @@unique([fechaReferencia])
+}
