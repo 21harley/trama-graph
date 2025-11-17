@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 
 import ControlPanel from "./components/ControlPanel";
 import RecordsTable from "./components/RecordsTable";
-import type { GasOption, MeasurementRecord } from "./types";
+import type { GasOption, MeasurementRecord, OptionalFilterVisibility } from "./types";
 import { useIntroGate } from "../../core/hooks/useIntroGate";
 
 type FiltersState = {
@@ -10,6 +10,8 @@ type FiltersState = {
   startTime: string;
   endTime: string;
   gasId: string;
+  threshold: string;
+  thresholdOperator: "gte" | "lte" | "eq";
 };
 
 const API_BASE_URL = "http://localhost:3000/api/v1";
@@ -82,6 +84,12 @@ function RegistroPageContent() {
     startTime: "00:00",
     endTime: "23:59",
     gasId: "",
+    threshold: "",
+    thresholdOperator: "gte",
+  });
+  const [optionalFilters, setOptionalFilters] = useState<OptionalFilterVisibility>({
+    gas: false,
+    threshold: false,
   });
   const [records, setRecords] = useState<MeasurementRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -109,8 +117,14 @@ function RegistroPageContent() {
         params.append("end", endISO);
       }
 
-      if (filters.gasId) {
+      if (optionalFilters.gas && filters.gasId) {
         params.append("gasId", filters.gasId);
+      }
+
+      const thresholdValue = filters.threshold.trim();
+      if (optionalFilters.threshold && thresholdValue.length > 0) {
+        params.append("threshold", thresholdValue);
+        params.append("thresholdOperator", filters.thresholdOperator);
       }
 
       const response = await fetch(`${API_BASE_URL}/measurements?${params.toString()}`);
@@ -154,7 +168,7 @@ function RegistroPageContent() {
     ]);
 
     const csvContent = [header, ...rows]
-      .map((row) => row.map((cell) => `"${cell.replaceAll("\"", "\"\"")}"`).join(","))
+      .map((row) => row.map((cell) => `"${cell.replaceAll("\"", "\"\"")}"`).join(";"))
       .join("\n");
 
     const blob = new Blob([`\uFEFF${csvContent}`], { type: "text/csv;charset=utf-8;" });
@@ -183,6 +197,10 @@ function RegistroPageContent() {
         <ControlPanel
           filters={filters}
           onFilterChange={handleFilterChange}
+          optionalFilters={optionalFilters}
+          onToggleOptionalFilter={(filter, enabled) =>
+            setOptionalFilters((prev) => ({ ...prev, [filter]: enabled }))
+          }
           onConsult={handleConsult}
           onExport={handleExport}
           gasOptions={GAS_OPTIONS}

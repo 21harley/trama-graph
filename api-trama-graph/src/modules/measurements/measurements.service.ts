@@ -14,12 +14,14 @@ export type ListMeasurementsParams = {
   gasId?: number;
   start?: Date;
   end?: Date;
+  threshold?: number;
+  thresholdOperator?: "gte" | "lte" | "eq";
 };
 
 export type MeasurementWithRelations = Awaited<ReturnType<typeof prisma.medicion.findMany>>;
 
-export async function listMeasurements({ gasId, start, end }: ListMeasurementsParams): Promise<MeasurementWithRelations> {
-  const where: Record<string, unknown> = {};
+export async function listMeasurements({ gasId, start, end, threshold, thresholdOperator = "gte" }: ListMeasurementsParams): Promise<MeasurementWithRelations> {
+  const where: Prisma.MedicionWhereInput = {};
 
   if (typeof gasId === "number") {
     where.idTipoGas = gasId;
@@ -30,6 +32,16 @@ export async function listMeasurements({ gasId, start, end }: ListMeasurementsPa
       ...(start ? { gte: start } : {}),
       ...(end ? { lte: end } : {}),
     };
+  }
+
+  if (typeof threshold === "number") {
+    if (thresholdOperator === "eq") {
+      where.umbral = { equals: threshold };
+    } else if (thresholdOperator === "lte") {
+      where.umbral = { lte: threshold };
+    } else {
+      where.umbral = { gte: threshold };
+    }
   }
 
   return prisma.medicion.findMany({

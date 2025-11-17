@@ -9,6 +9,8 @@ export async function listMeasurementsController(req: Request, res: Response, ne
     const gasParam = (req.query.gasId ?? req.query.idTipoGas) as string | undefined;
     const startParam = (req.query.start ?? req.query.startDate) as string | undefined;
     const endParam = (req.query.end ?? req.query.endDate) as string | undefined;
+    const thresholdParam = (req.query.threshold ?? req.query.umbralMin) as string | undefined;
+    const thresholdOperatorParam = (req.query.thresholdOperator ?? req.query.umbralOperador) as string | undefined;
 
     let gasId: number | undefined;
     if (gasParam && gasParam.trim().length > 0) {
@@ -43,7 +45,31 @@ export async function listMeasurementsController(req: Request, res: Response, ne
       }
     }
 
-    const measurements = await listMeasurements({ gasId, start, end });
+    let threshold: number | undefined;
+    if (thresholdParam && thresholdParam.trim().length > 0) {
+      threshold = Number(thresholdParam);
+      if (Number.isNaN(threshold)) {
+        throw new AppError("El parámetro threshold debe ser numérico", {
+          statusCode: 400,
+          code: "INVALID_THRESHOLD",
+        });
+      }
+    }
+
+    let thresholdOperator: "gte" | "lte" | "eq" | undefined;
+    if (thresholdOperatorParam && thresholdOperatorParam.trim().length > 0) {
+      const normalized = thresholdOperatorParam.trim().toLowerCase();
+      if (normalized === "gte" || normalized === "lte" || normalized === "eq") {
+        thresholdOperator = normalized;
+      } else {
+        throw new AppError("El parámetro thresholdOperator debe ser gte, lte o eq", {
+          statusCode: 400,
+          code: "INVALID_THRESHOLD_OPERATOR",
+        });
+      }
+    }
+
+    const measurements = await listMeasurements({ gasId, start, end, threshold, thresholdOperator });
 
     return res.json({ data: measurements });
   } catch (error) {

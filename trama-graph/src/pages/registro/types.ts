@@ -12,3 +12,8 @@ export type MeasurementRecord = {
   fechaMedida: string;
   tipoDeGasNombre: string | null;
 };
+
+export type OptionalFilterVisibility = {
+  gas: boolean;
+  threshold: boolean;
+};

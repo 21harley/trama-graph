@@ -1,15 +1,19 @@
-import type { GasOption } from "../types";
+import type { GasOption, OptionalFilterVisibility } from "../types";
 
 type FiltersState = {
   date: string;
   startTime: string;
   endTime: string;
   gasId: string;
+  threshold: string;
+  thresholdOperator: string;
 };
 
 type ControlPanelProps = {
   filters: FiltersState;
   onFilterChange: (field: keyof FiltersState, value: string) => void;
+  optionalFilters: OptionalFilterVisibility;
+  onToggleOptionalFilter: (filter: keyof OptionalFilterVisibility, enabled: boolean) => void;
   onConsult: () => void;
   onExport: () => void;
   gasOptions: GasOption[];
@@ -22,7 +26,7 @@ const panelStyle: React.CSSProperties = {
   flexDirection: "column",
   width: "100%",
   gap: 8,
-  padding: "10px 24px",
+  padding: "2px 24px 10px",
   background: "rgba(15, 23, 42, 0.85)",
   borderRadius: 16,
   border: "1px solid rgba(148, 197, 253, 0.18)",
@@ -35,7 +39,15 @@ const inputsRowStyle: React.CSSProperties = {
   flexWrap: "wrap",
   gap: 16,
   alignItems: "center",
-  padding: "10px 12px",
+  padding: "2px 12px 10px",
+};
+
+const checkboxesRowStyle: React.CSSProperties = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 16,
+  alignItems: "center",
+  padding: "2px 12px 12px",
 };
 
 const inputStyle: React.CSSProperties = {
@@ -43,7 +55,7 @@ const inputStyle: React.CSSProperties = {
   color: "#ffffffff",
   border: "1px solid rgba(29, 46, 87, 0.93)",
   borderRadius: 12,
-  padding: "10px 14px",
+  padding: "8px 12px",
   height: 42,
   minWidth: 160,
   outline: "none",
@@ -51,8 +63,22 @@ const inputStyle: React.CSSProperties = {
   boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.05)",
 };
 
+const selectBaseStyle: React.CSSProperties = {
+  ...inputStyle,
+  color: "#ffffff",
+  paddingRight: 40,
+  backgroundImage:
+    "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"8\" viewBox=\"0 0 12 8\" fill=\"none\"><path d=\"M1.41 0.589844L6 5.16984L10.59 0.589844L12 1.99984L6 7.99984L0 1.99984L1.41 0.589844Z\" fill=\"white\"/></svg>')",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "calc(100% - 14px) center",
+  backgroundSize: "12px",
+  appearance: "none",
+  WebkitAppearance: "none",
+  MozAppearance: "none",
+};
+
 const buttonPrimaryStyle: React.CSSProperties = {
-  padding: "12px 20px",
+  padding: "8px 16px",
   borderRadius: 12,
   border: "none",
   cursor: "pointer",
@@ -76,24 +102,59 @@ const buttonSecondaryStyle: React.CSSProperties = {
 export default function ControlPanel({
   filters,
   onFilterChange,
+  optionalFilters,
+  onToggleOptionalFilter,
   onConsult,
   onExport,
   gasOptions,
   loading,
   disableExport,
 }: ControlPanelProps) {
-  return ( 
-    <section style={panelStyle}>
+  return (
+    <section className="registro-control-panel" style={panelStyle}>
+      <style>
+        {`
+          .registro-control-panel input[type="date"]::-webkit-calendar-picker-indicator,
+          .registro-control-panel input[type="time"]::-webkit-calendar-picker-indicator,
+          .registro-control-panel input[type="number"]::-webkit-inner-spin-button,
+          .registro-control-panel input[type="number"]::-webkit-outer-spin-button {
+            filter: invert(1);
+          }
+
+          .registro-control-panel input[type="number"]::-moz-focus-inner {
+            color: inherit;
+          }
+        `}
+      </style>
       <header style={{ display: "flex", flexDirection: "column", gap: 4}}>
-        <h2 style={{ margin: 0, color: "#e2e8f0", fontSize: 16, fontWeight: 600 }}>Consulta de registros</h2>
-        <p style={{ margin: 0, color: "#94a3b8", fontSize: 14 }}>
+        <h2 style={{ margin: 0, color: "#e2e8f0", fontSize: 18, fontWeight: 600 }}>Consulta de registros</h2>
+        <p style={{ margin: 0, color: "#94a3b8", fontSize: 16 }}>
           Define un rango de fecha y hora junto al tipo de gas para consultar las mediciones almacenadas.
         </p>
       </header>
 
+      <div style={checkboxesRowStyle}>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, color: "#cbd5f5", fontSize: 15 }}>
+          <input
+            type="checkbox"
+            checked={optionalFilters.gas}
+            onChange={(event) => onToggleOptionalFilter("gas", event.target.checked)}
+          />
+          Filtro por tipo de gas
+        </label>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, color: "#cbd5f5", fontSize: 15 }}>
+          <input
+            type="checkbox"
+            checked={optionalFilters.threshold}
+            onChange={(event) => onToggleOptionalFilter("threshold", event.target.checked)}
+          />
+          Filtro por umbral
+        </label>
+      </div>
+
       <div style={inputsRowStyle}>
         <div style={{ display: "flex", flexDirection: "column", gap: 6,height:"68px" }}>
-          <label style={{ color: "#cbd5f5", fontSize: 12 }}>Fecha</label>
+          <label style={{ color: "#cbd5f5", fontSize: 14 }}>Fecha</label>
           <input
             type="date"
             value={filters.date}
@@ -103,7 +164,7 @@ export default function ControlPanel({
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6,height:"68px" }}>
-          <label style={{ color: "#cbd5f5", fontSize: 12 }}>Hora inicio</label>
+          <label style={{ color: "#cbd5f5", fontSize: 14 }}>Hora inicio</label>
           <input
             type="time"
             value={filters.startTime}
@@ -113,7 +174,7 @@ export default function ControlPanel({
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6,height:"68px" }}>
-          <label style={{ color: "#cbd5f5", fontSize: 12 }}>Hora fin</label>
+          <label style={{ color: "#cbd5f5", fontSize: 14 }}>Hora fin</label>
           <input
             type="time"
             value={filters.endTime}
@@ -122,20 +183,55 @@ export default function ControlPanel({
           />
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 6,height:"68px" }}>
-          <label style={{ color: "#cbd5f5", fontSize: 12 }}>Tipo de gas</label>
-          <select
-            value={filters.gasId}
-            onChange={(event) => onFilterChange("gasId", event.target.value)}
-            style={{ ...inputStyle, minWidth: 180 }}
-          >
-            {gasOptions.map((option) => (
-              <option key={option.value} value={option.value} style={{ color: "#0f172a" }}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
+        {optionalFilters.gas ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 6,height:"68px" }}>
+            <label style={{ color: "#cbd5f5", fontSize: 14 }}>Tipo de gas</label>
+            <select
+              value={filters.gasId}
+              onChange={(event) => onFilterChange("gasId", event.target.value)}
+              style={{ ...selectBaseStyle, minWidth: 180 }}
+            >
+              {gasOptions.map((option) => (
+                <option key={option.value} value={option.value} style={{ color: "#0f172a" }}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
+        {optionalFilters.threshold ? (
+          <>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, height: "68px" }}>
+              <label style={{ color: "#cbd5f5", fontSize: 14 }}>Umbral</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={filters.threshold}
+                onChange={(event) => onFilterChange("threshold", event.target.value)}
+                style={{ ...inputStyle, minWidth: 160 }}
+                placeholder="Ej. 500"
+              />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, height: "68px" }}>
+              <label style={{ color: "#cbd5f5", fontSize: 14 }}>Comparación de umbral</label>
+              <select
+                value={filters.thresholdOperator}
+                onChange={(event) => onFilterChange("thresholdOperator", event.target.value)}
+                style={{ ...selectBaseStyle, minWidth: 160 }}
+              >
+                <option value="gte" style={{ color: "#0f172a" }}>
+                  Mayor o igual (≥)
+                </option>
+                <option value="lte" style={{ color: "#0f172a" }}>
+                  Menor o igual (≤)
+                </option>
+                <option value="eq" style={{ color: "#0f172a" }}>
+                  Igual (=)
+                </option>
+              </select>
+            </div>
+          </>
+        ) : null}
         <div style={{ display: "flex", flexDirection: "column", gap: 6,height:"68px",justifyContent:"end" }}>
                    <button
           type="button"
