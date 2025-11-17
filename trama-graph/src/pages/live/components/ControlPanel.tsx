@@ -23,7 +23,8 @@ export default function ControlPanel({
     border: "1px solid #333",
     cursor: "pointer",
     height: 32,
-    display: "inline-flex",
+    display: "flex",
+    gap: 10,
     alignItems: "center",
     justifyContent: "center",
   };
@@ -34,7 +35,7 @@ export default function ControlPanel({
         display: "flex",
         flexDirection: "column",
         width: "100%",
-        paddingTop: "20px",
+        paddingTop: "4px",
       }}
     >
       <div
@@ -45,15 +46,13 @@ export default function ControlPanel({
           width: "100%",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: 20 }}>
-          <button
+          <div style={{ display: "flex", alignItems: "center", width: "100%", gap: 10, marginLeft: 20 }}>
+            <button
             onClick={isConnected ? onDisconnectArduino : onConnectArduino}
             style={buttonStyle}
           >
             {isConnected ? "Desconectar Arduino" : "Conectar Arduino"}
-          </button>
-
-          <div
+            <div
             style={{
               width: 16,
               height: 16,
@@ -62,35 +61,9 @@ export default function ControlPanel({
               border: "1px solid #333",
             }}
           />
-        </div>
-
-        {showDownloadButton ? (
-          <button
-            onClick={onDownloadLogs}
-            style={{ ...buttonStyle, marginRight: 20 }}
-          >
-            Descargar registro
+          <div></div>
           </button>
-        ) : (
-          <div style={{ width: 140, height: 32, marginRight: 20 }} />
-        )}
-      </div>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-start",
-          alignItems: "center",
-          marginTop: 10,
-          marginLeft: 20,
-          marginRight: 20,
-          marginBottom: 10,
-          minHeight: 32,
-          flexWrap: "wrap",
-          gap: 10,
-        }}
-      >
-        <div>
           {isConnected ? (
             <button onClick={onResetSimulation} style={buttonStyle}>
               Reiniciar

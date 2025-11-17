@@ -23,8 +23,8 @@ export default function GasVisibilityPanel() {
       <div>
         <h3
           style={{
-            marginBottom: 16,
-            fontSize: "1.2rem",
+            marginBottom: 8,
+            fontSize: "1rem",
             fontWeight: 600,
           }}
         >
@@ -34,7 +34,7 @@ export default function GasVisibilityPanel() {
           style={{
             display: "flex",
             gap: "12px",
-            marginTop: 8,
+            marginTop: 4,
             flexWrap: "wrap",
           }}
         >
@@ -47,7 +47,7 @@ export default function GasVisibilityPanel() {
                 gap: "12px",
                 cursor: "pointer",
                 fontSize: 14,
-                padding: "8px 12px",
+                padding: "4px 6px",
                 borderRadius: 8,
                 backgroundColor: visibleGases[gas]
                   ? `${gasColors[gas]}15`

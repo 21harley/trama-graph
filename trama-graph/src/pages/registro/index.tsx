@@ -148,14 +148,14 @@ export default function RegistroPage() {
     <div
       style={{
         width: "100%",
-        minHeight: "100vh",
+        maxHeight: "90vh",
         display: "flex",
         justifyContent: "center",
         background: "linear-gradient(180deg, rgba(15,23,42,0.95), rgba(15,23,42,0.75))",
-        padding: "30px 0",
+        padding: "0",
       }}
     >
-      <div style={{ width: "95%", display: "flex", flexDirection: "column", gap: 28 }}>
+      <div style={{ width: "95%", display: "flex", flexDirection: "column", gap: 8 }}>
         <ControlPanel
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -169,7 +169,7 @@ export default function RegistroPage() {
         {error ? (
           <div
             style={{
-              padding: "16px 20px",
+              padding: "8px 10px",
               borderRadius: 12,
               border: "1px solid rgba(252, 165, 165, 0.35)",
               background: "rgba(239, 68, 68, 0.12)",

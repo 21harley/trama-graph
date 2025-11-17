@@ -12,12 +12,16 @@ const tableContainerStyle: React.CSSProperties = {
   borderRadius: 16,
   border: "1px solid rgba(148, 197, 253, 0.15)",
   boxShadow: "0 20px 40px rgba(14, 116, 144, 0.18)",
+  overflowY: "auto",
+  maxHeight:"380px",
 };
 
 const tableStyle: React.CSSProperties = {
   width: "100%",
   borderCollapse: "collapse",
   color: "#e2e8f0",
+  maxHeight:"300px",
+  overflowY: "auto",
 };
 
 const headerCellStyle: React.CSSProperties = {

@@ -85,11 +85,13 @@ export default function ThresholdControl() {
           <div
             style={{
               width: "min(90vw, 720px)",
-              maxHeight: "90vh",
+              maxHeight: "95vh",
               background: "#0f172a",
               borderRadius: 16,
               border: "1px solid #1e293b",
-              padding: "24px",
+              padding: "12px",
+              paddingLeft: "24px",
+              paddingRight: "24px",
               boxShadow: "0 20px 50px rgba(8,15,26,0.6)",
               overflow: "auto",
             }}
@@ -99,11 +101,11 @@ export default function ThresholdControl() {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: 24,
+                marginBottom: 12,
               }}
             >
               <div>
-                <h2 style={{ fontSize: "1.4rem", fontWeight: 700, marginBottom: 4 }}>Umbrales por gas</h2>
+                <h2 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: 4 }}>Umbrales por gas</h2>
                 <p style={{ fontSize: "0.9rem", color: "#cbd5f5" }}>
                   Ajusta los valores límite y las alertas visuales. Al confirmar se desconectará el Arduino.
                 </p>
@@ -115,7 +117,6 @@ export default function ThresholdControl() {
                   border: "none",
                   background: "transparent",
                   color: "#94a3b8",
-                  fontSize: "1.5rem",
                   cursor: "pointer",
                 }}
                 aria-label="Cerrar"
@@ -128,7 +129,7 @@ export default function ThresholdControl() {
               style={{
                 width: "100%",
                 borderCollapse: "collapse",
-                marginBottom: 24,
+                marginBottom: 2,
               }}
             >
               <thead>

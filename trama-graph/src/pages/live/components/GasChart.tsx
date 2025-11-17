@@ -8,6 +8,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import GasVisibilityPanel from "./GasVisibilityPanel";
+import ThresholdControl from "./ThresholdControl";
 
 interface GasChartProps {
   data: any[];
@@ -30,13 +32,13 @@ export default function GasChart({ data, minTime, maxTime, visibleGases }: GasCh
       style={{
         marginLeft: 20,
         width: "90%",
-        height: "80%",
+        height: "45%",
         display: "grid",
         placeItems: "center",
         marginTop: "20px",
       }}
     >
-      <ResponsiveContainer width="100%" aspect={2.5}>
+      <ResponsiveContainer width="100%" aspect={3.5}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis 
@@ -103,6 +105,10 @@ export default function GasChart({ data, minTime, maxTime, visibleGases }: GasCh
           )}
         </LineChart>
       </ResponsiveContainer>
+      <div style={{ display: "flex", gap: "15px", flexWrap: "wrap", justifyContent:"center" }}>
+          <ThresholdControl />
+          <GasVisibilityPanel />
+        </div>
     </div>
   );
 }

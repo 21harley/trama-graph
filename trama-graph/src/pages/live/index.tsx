@@ -350,7 +350,7 @@ export default function LivePage() {
   };
 
   return (
-    <div className="w-[100%] grid place-items-center ">
+    <div className="w-[95%] grid place-items-center ">
       <div className="w-[95%]">
         <ControlPanel
           onDownloadLogs={downloadLogs}
@@ -367,13 +367,6 @@ export default function LivePage() {
           maxTime={maxTime}
           visibleGases={visibleGases}
         />
-
-        <div style={{ display: "flex", gap: "15px", flexWrap: "wrap", justifyContent:"center" }}>
-          <ThresholdControl />
-          <GasVisibilityPanel />
-        </div>
-
-        <ActiveAlertsPanel />
 
         <ToastContainer position="bottom-right" autoClose={3000} />
       </div>
