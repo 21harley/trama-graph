@@ -2,10 +2,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import GasChart from "./components/GasChart";
 import ControlPanel from "./components/ControlPanel";
-import GasVisibilityPanel from "./components/GasVisibilityPanel";
-import ActiveAlertsPanel from "./components/ActiveAlertsPanel";
-import ThresholdControl from "./components/ThresholdControl";
 import { useLiveStore, GAS_KEYS, DEFAULT_THRESHOLD, type GasKey } from "./store";
+import { useIntroGate } from "../../core/hooks/useIntroGate";
 
 import type { ChartPoint, AlertItem, ActiveAlert } from "./types";
 import { ToastContainer, toast } from "react-toastify";
@@ -29,6 +27,28 @@ const GAS_ID_MAP: Record<string, number> = {
 };
 
 export default function LivePage() {
+  const gateStatus = useIntroGate();
+
+  if (gateStatus !== "allowed") {
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          color: "#e2e8f0",
+        }}
+      >
+        Cargando...
+      </div>
+    );
+  }
+
+  return <LivePageContent />;
+}
+
+function LivePageContent() {
   const portRef = useRef<SerialPort | null>(null);
   const readerRef = useRef<ReadableStreamDefaultReader<Uint8Array> | null>(null);
 

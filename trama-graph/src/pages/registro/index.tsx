@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import ControlPanel from "./components/ControlPanel";
 import RecordsTable from "./components/RecordsTable";
 import type { GasOption, MeasurementRecord } from "./types";
+import { useIntroGate } from "../../core/hooks/useIntroGate";
 
 type FiltersState = {
   date: string;
@@ -51,6 +52,29 @@ function buildISODate(date: string, time: string, fallbackTime: string) {
 }
 
 export default function RegistroPage() {
+  const gateStatus = useIntroGate();
+
+  if (gateStatus !== "allowed") {
+    return (
+      <div
+        style={{
+          width: "100%",
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#e2e8f0",
+        }}
+      >
+        Cargando...
+      </div>
+    );
+  }
+
+  return <RegistroPageContent />;
+}
+
+function RegistroPageContent() {
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   const [filters, setFilters] = useState<FiltersState>({
