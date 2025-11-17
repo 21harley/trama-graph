@@ -21,6 +21,8 @@ interface LiveState {
   setActiveAlerts: (alerts: ActiveAlert[]) => void;
   toggleGasVisibility: (gas: string) => void;
   resetAlertsState: () => void;
+  RO: number;
+  updateRO: (value: number) => void;
   backendFailures: number;
   backendBlocked: boolean;
   incrementBackendFailure: () => void;
@@ -98,6 +100,19 @@ export const useLiveStore = create<LiveState>((set) => ({
   visibleGases: defaultVisibleGases,
   backendFailures: 0,
   backendBlocked: false,
+  RO: safeGetLocalStorage<number>("gasRO", 0.57),
+
+  updateRO: (value: number) => {
+    set(() => {
+      const finalValue = Number.isFinite(value) ? value : 0.57;
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("gasRO", String(finalValue));
+      }
+
+      return { RO: finalValue };
+    });
+  },
 
   setThresholds: (values) => {
     const normalized = GAS_KEYS.reduce((acc, key) => {

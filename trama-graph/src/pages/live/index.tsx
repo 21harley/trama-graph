@@ -8,6 +8,7 @@ import { useIntroGate } from "../../core/hooks/useIntroGate";
 import type { ChartPoint, AlertItem, ActiveAlert } from "./types";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { convertData } from "./data-conversion";
 
 const WINDOW_TIME = 30;
 
@@ -235,28 +236,10 @@ function LivePageContent() {
         const batch: MeasurementPayload[] = [];
 
         for (const line of lines) {
-          const parts = line.trim().split(",");
-          if (parts.length < 6) continue;
+          const mv = Number(line.trim());
+          if (isNaN(mv)) continue;
 
-          const [
-            millisStr,
-            coStr,
-            alStr,
-            h2Str,
-            ch4Str,
-            lpgStr,
-          ] = parts.map((segment) => segment.replace("\r", ""));
-
-          const [millis, CO, AL, H2, CH4, LPG] = [
-            Number(millisStr),
-            Number(coStr),
-            Number(alStr),
-            Number(h2Str),
-            Number(ch4Str),
-            Number(lpgStr),
-          ];
-
-          void millis;
+          const { CO, AL, H2, CH4, LPG } = convertData(mv)!;
 
           if ([CO, AL, H2, CH4, LPG].some(Number.isNaN)) continue;
 

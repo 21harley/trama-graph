@@ -13,17 +13,21 @@ const gasDisplayNames: Record<GasKey, string> = {
 export default function ThresholdControl() {
   const thresholds = useLiveStore((state) => state.thresholds);
   const alarmEnabled = useLiveStore((state) => state.alarmEnabled);
+  const RO = useLiveStore((state) => state.RO);
+  const updateRO = useLiveStore((state) => state.updateRO);
   const updateThreshold = useLiveStore((state) => state.updateThreshold);
   const setAlarmEnabledForGas = useLiveStore((state) => state.setAlarmEnabledForGas);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [localThresholds, setLocalThresholds] = useState(() => ({ ...thresholds }));
   const [localAlarmEnabled, setLocalAlarmEnabled] = useState(() => ({ ...alarmEnabled }));
+  const [localRO, setLocalRO] = useState(RO);
 
   useEffect(() => {
     setLocalThresholds({ ...thresholds });
     setLocalAlarmEnabled({ ...alarmEnabled });
-  }, [thresholds, alarmEnabled]);
+    setLocalRO(RO);
+  }, [thresholds, alarmEnabled, RO]);
 
   const handleOpenModal = () => {
     setLocalThresholds({ ...thresholds });
@@ -44,6 +48,7 @@ export default function ThresholdControl() {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("trama:disconnect-arduino"));
     }
+    updateRO(localRO);
 
     setIsModalOpen(false);
   };
@@ -195,6 +200,26 @@ export default function ThresholdControl() {
                 ))}
               </tbody>
             </table>
+
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: "block", marginBottom: 6, color: "#e2e8f0" }}>
+                Valor RO (calibración)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={localRO}
+                onChange={(e) => setLocalRO(Number(e.target.value))}
+                style={{
+                  width: "200px",
+                  padding: "8px 10px",
+                  borderRadius: 8,
+                  border: "1px solid #334155",
+                  background: "#1e293b",
+                  color: "#e2e8f0",
+                }}
+              />
+            </div>
 
             <footer
               style={{
