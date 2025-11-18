@@ -73,7 +73,7 @@ ENABLE_GESTION_SNAPSHOT_CRON=true  # opcional, activa cron diario
 4. **Preparar la base de datos**
    ```bash
    npx prisma migrate dev    # aplica migraciones y genera tipados
-   npx prisma db seed        # opcional: carga datos de ejemplo (usa prisma/seed.ts)
+   npm run prisma:seed        # opcional: carga datos de ejemplo (usa prisma/seed.ts)
    npx prisma generate
    ```
 
