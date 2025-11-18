@@ -36,11 +36,26 @@ CREATE TABLE "Alarma" (
     CONSTRAINT "Alarma_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "GestionAlarmas" (
+    "id" SERIAL NOT NULL,
+    "fechaReferencia" TIMESTAMP(3) NOT NULL,
+    "totalActivaciones" INTEGER NOT NULL,
+    "conteoPorGas" JSONB NOT NULL,
+    "listaAlarmas" JSONB,
+    "generadoEn" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "GestionAlarmas_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE INDEX "Medicion_idTipoGas_fechaMedida_idx" ON "Medicion"("idTipoGas", "fechaMedida" DESC);
 
 -- CreateIndex
 CREATE INDEX "Alarma_idTipoGas_estado_idx" ON "Alarma"("idTipoGas", "estado");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "GestionAlarmas_fechaReferencia_key" ON "GestionAlarmas"("fechaReferencia");
 
 -- AddForeignKey
 ALTER TABLE "Medicion" ADD CONSTRAINT "Medicion_idTipoGas_fkey" FOREIGN KEY ("idTipoGas") REFERENCES "TipoDeGases"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
