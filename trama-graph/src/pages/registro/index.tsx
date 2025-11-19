@@ -194,48 +194,79 @@ function RegistroPageContent() {
   };
 
   return (
-    <div
-      style={{
-        width: "100%",
-        maxHeight: "90vh",
-        display: "flex",
-        justifyContent: "center",
-        background: "linear-gradient(180deg, rgba(15,23,42,0.95), rgba(15,23,42,0.75))",
-        padding: "0",
-      }}
-    >
-      <div style={{ width: "95%", display: "flex", flexDirection: "column", gap: 8 }}>
-        <ControlPanel
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          optionalFilters={optionalFilters}
-          onToggleOptionalFilter={(filter, enabled) =>
-            setOptionalFilters((prev) => ({ ...prev, [filter]: enabled }))
+    <>
+      <style>
+        {`
+          .registro-scroll-root,
+          .registro-scroll-root * {
+            scrollbar-width: thin;
+            scrollbar-color: #38bdf8 rgba(15, 23, 42, 0.65);
           }
-          onConsult={handleConsult}
-          onExport={handleExport}
-          gasOptions={GAS_OPTIONS}
-          loading={loading}
-          disableExport={!records.length}
-        />
 
-        {error ? (
-          <div
-            style={{
-              padding: "8px 10px",
-              borderRadius: 12,
-              border: "1px solid rgba(252, 165, 165, 0.35)",
-              background: "rgba(239, 68, 68, 0.12)",
-              color: "#fecaca",
-              maxWidth: 520,
-            }}
-          >
-            {error}
-          </div>
-        ) : null}
+          .registro-scroll-root ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+          }
 
-        <RecordsTable data={records} loading={loading} />
+          .registro-scroll-root ::-webkit-scrollbar-track {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.6));
+            border-radius: 999px;
+          }
+
+          .registro-scroll-root ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.85), rgba(99, 102, 241, 0.85));
+            border-radius: 999px;
+          }
+
+          .registro-scroll-root ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 1), rgba(99, 102, 241, 1));
+          }
+        `}
+      </style>
+      <div
+        className="registro-scroll-root"
+        style={{
+          width: "100%",
+          maxHeight: "90vh",
+          display: "flex",
+          justifyContent: "center",
+          background: "linear-gradient(180deg, rgba(15,23,42,0.95), rgba(15,23,42,0.75))",
+          padding: "0",
+        }}
+      >
+        <div style={{ width: "95%", display: "flex", flexDirection: "column", gap: 8 }}>
+          <ControlPanel
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            optionalFilters={optionalFilters}
+            onToggleOptionalFilter={(filter, enabled) =>
+              setOptionalFilters((prev) => ({ ...prev, [filter]: enabled }))
+            }
+            onConsult={handleConsult}
+            onExport={handleExport}
+            gasOptions={GAS_OPTIONS}
+            loading={loading}
+            disableExport={!records.length}
+          />
+
+          {error ? (
+            <div
+              style={{
+                padding: "8px 10px",
+                borderRadius: 12,
+                border: "1px solid rgba(252, 165, 165, 0.35)",
+                background: "rgba(239, 68, 68, 0.12)",
+                color: "#fecaca",
+                maxWidth: 520,
+              }}
+            >
+              {error}
+            </div>
+          ) : null}
+
+          <RecordsTable data={records} loading={loading} />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

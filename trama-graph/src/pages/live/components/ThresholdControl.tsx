@@ -138,17 +138,22 @@ export default function ThresholdControl() {
               }}
             >
               <div>
-                <h2 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: 4 }}>Configuración avanzada</h2>
-                <p style={{ fontSize: "0.9rem", color: "#cbd5f5" }}>
-                  Ajusta los umbrales o gestiona qué gases se envían al backend. Al confirmar se desconectará el
-                  SDGM-PRO para aplicar los cambios.
-                </p>
-              </div>
-              <button
+                <div style={{
+                  display:"flex",
+                  justifyContent:"space-between"
+                }}>
+                <h2 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: 4, display:"inline-block"  }}>Configuración avanzada</h2>
+                <button
                 type="button"
                 onClick={handleCloseModal}
                 style={{
+                  padding: "0",
                   border: "none",
+                  margin: "0",
+                  height: "30px",
+                  width: "24px",
+                  fontSize: "1rem",
+                  fontWeight: 600,
                   background: "transparent",
                   color: "#94a3b8",
                   cursor: "pointer",
@@ -157,6 +162,12 @@ export default function ThresholdControl() {
               >
                 ×
               </button>
+                </div>
+                <p style={{ fontSize: "0.9rem", color: "#cbd5f5" }}>
+                  Ajusta los umbrales o gestiona qué gases se envían al backend. Al confirmar se desconectará el
+                  SDGM-PRO para aplicar los cambios.
+                </p>
+              </div>
             </header>
 
             <nav style={{ display: "flex", gap: 12, marginBottom: 16 }}>

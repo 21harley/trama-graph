@@ -20,16 +20,16 @@ const tableStyle: React.CSSProperties = {
   width: "100%",
   borderCollapse: "collapse",
   color: "#e2e8f0",
-  maxHeight:"300px",
+  maxHeight:"280px",
   overflowY: "auto",
 };
 
 const headerCellStyle: React.CSSProperties = {
   textAlign: "left",
-  padding: "14px 18px",
+  padding: "8px 10px",
   borderBottom: "1px solid rgba(148, 197, 253, 0.12)",
   background: "rgba(59, 130, 246, 0.12)",
-  fontSize: 13,
+  fontSize: 12,
   textTransform: "uppercase",
   letterSpacing: 0.8,
 };

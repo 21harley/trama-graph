@@ -130,9 +130,6 @@ export default function ControlPanel({
       </style>
       <header style={{ display: "flex", flexDirection: "column", gap: 4}}>
         <h2 style={{ margin: 0, color: "#e2e8f0", fontSize: 18, fontWeight: 600 }}>Consulta de registros</h2>
-        <p style={{ margin: 0, color: "#94a3b8", fontSize: 16 }}>
-          Define un rango de fecha y hora junto al tipo de gas para consultar las mediciones almacenadas.
-        </p>
       </header>
 
       <div style={checkboxesRowStyle}>
