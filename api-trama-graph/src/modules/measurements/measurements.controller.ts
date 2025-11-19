@@ -11,6 +11,8 @@ export async function listMeasurementsController(req: Request, res: Response, ne
     const endParam = (req.query.end ?? req.query.endDate) as string | undefined;
     const thresholdParam = (req.query.threshold ?? req.query.umbralMin) as string | undefined;
     const thresholdOperatorParam = (req.query.thresholdOperator ?? req.query.umbralOperador) as string | undefined;
+    const measurementParam = (req.query.measurement ?? req.query.valorMin) as string | undefined;
+    const measurementOperatorParam = (req.query.measurementOperator ?? req.query.valorOperador) as string | undefined;
 
     let gasId: number | undefined;
     if (gasParam && gasParam.trim().length > 0) {
@@ -69,7 +71,39 @@ export async function listMeasurementsController(req: Request, res: Response, ne
       }
     }
 
-    const measurements = await listMeasurements({ gasId, start, end, threshold, thresholdOperator });
+    let measurement: number | undefined;
+    if (measurementParam && measurementParam.trim().length > 0) {
+      measurement = Number(measurementParam);
+      if (Number.isNaN(measurement)) {
+        throw new AppError("El parámetro measurement debe ser numérico", {
+          statusCode: 400,
+          code: "INVALID_MEASUREMENT",
+        });
+      }
+    }
+
+    let measurementOperator: "gte" | "lte" | undefined;
+    if (measurementOperatorParam && measurementOperatorParam.trim().length > 0) {
+      const normalized = measurementOperatorParam.trim().toLowerCase();
+      if (normalized === "gte" || normalized === "lte") {
+        measurementOperator = normalized;
+      } else {
+        throw new AppError("El parámetro measurementOperator debe ser gte o lte", {
+          statusCode: 400,
+          code: "INVALID_MEASUREMENT_OPERATOR",
+        });
+      }
+    }
+
+    const measurements = await listMeasurements({
+      gasId,
+      start,
+      end,
+      threshold,
+      thresholdOperator,
+      measurement,
+      measurementOperator,
+    });
 
     return res.json({ data: measurements });
   } catch (error) {
@@ -104,8 +138,15 @@ export async function registerMeasurementsController(
 ) {
   try {
     const body = req.body as MeasurementInput[];
+    const storeAllParam = req.query.storeAll as string | undefined;
 
-    const result = await registerMeasurementsBatch(body);
+    let storeAll = false;
+    if (typeof storeAllParam === "string" && storeAllParam.trim().length > 0) {
+      const normalized = storeAllParam.trim().toLowerCase();
+      storeAll = normalized === "true" || normalized === "1";
+    }
+
+    const result = await registerMeasurementsBatch(body, { storeAll });
 
     return res.status(201).json({
       message: "Mediciones registradas",

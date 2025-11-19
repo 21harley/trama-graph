@@ -32,13 +32,13 @@ export default function GasChart({ data, minTime, maxTime, visibleGases }: GasCh
       style={{
         marginLeft: 20,
         width: "90%",
-        height: "45%",
+        height: "90%",
         display: "grid",
         placeItems: "center",
         marginTop: "20px",
       }}
     >
-      <ResponsiveContainer width="100%" aspect={3.5}>
+      <ResponsiveContainer width="100%" aspect={2.8}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis 

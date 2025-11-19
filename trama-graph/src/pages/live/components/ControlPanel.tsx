@@ -51,7 +51,7 @@ export default function ControlPanel({
             onClick={isConnected ? onDisconnectArduino : onConnectArduino}
             style={buttonStyle}
           >
-            {isConnected ? "Desconectar Arduino" : "Conectar Arduino"}
+            {isConnected ? "Desconectar SDGM-PRO" : "Conectar SDGM-PRO"}
             <div
             style={{
               width: 16,

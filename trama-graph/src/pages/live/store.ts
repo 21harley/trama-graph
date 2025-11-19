@@ -6,17 +6,23 @@ export type GasKey = (typeof GAS_KEYS)[number];
 
 type ThresholdRecord = Record<GasKey, number>;
 type AlarmEnabledRecord = Record<GasKey, boolean>;
+type MeasurementEnabledRecord = Record<GasKey, boolean>;
 
 interface LiveState {
   thresholds: ThresholdRecord;
   alarmEnabled: AlarmEnabledRecord;
+  measurementEnabled: MeasurementEnabledRecord;
+  storeAllMeasurements: boolean;
   alerts: AlertItem[];
   activeAlerts: ActiveAlert[];
   visibleGases: Record<string, boolean>;
   setThresholds: (values: ThresholdRecord) => void;
   setAlarmEnabledState: (values: AlarmEnabledRecord) => void;
+  setMeasurementEnabledState: (values: MeasurementEnabledRecord) => void;
   updateThreshold: (gas: GasKey, value: number) => void;
   setAlarmEnabledForGas: (gas: GasKey, enabled: boolean) => void;
+  setMeasurementEnabledForGas: (gas: GasKey, enabled: boolean) => void;
+  setStoreAllMeasurements: (value: boolean) => void;
   setAlerts: (alerts: AlertItem[]) => void;
   setActiveAlerts: (alerts: ActiveAlert[]) => void;
   toggleGasVisibility: (gas: string) => void;
@@ -40,6 +46,12 @@ const createDefaultAlarmEnabled = (): AlarmEnabledRecord =>
     acc[key] = true;
     return acc;
   }, {} as AlarmEnabledRecord);
+
+const createDefaultMeasurementEnabled = (): MeasurementEnabledRecord =>
+  GAS_KEYS.reduce((acc, key) => {
+    acc[key] = true;
+    return acc;
+  }, {} as MeasurementEnabledRecord);
 
 const defaultVisibleGases: Record<string, boolean> = {
   CO: true,
@@ -93,6 +105,23 @@ export const useLiveStore = create<LiveState>((set) => ({
       return fallback;
     }
   })(),
+  measurementEnabled: (() => {
+    const fallback = createDefaultMeasurementEnabled();
+    if (typeof window === "undefined") return fallback;
+    try {
+      const raw = window.localStorage.getItem("gasMeasurementEnabled");
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw) as Partial<Record<string, boolean>>;
+      return GAS_KEYS.reduce((acc, key) => {
+        const value = parsed[key];
+        acc[key] = typeof value === "boolean" ? value : true;
+        return acc;
+      }, {} as MeasurementEnabledRecord);
+    } catch {
+      return fallback;
+    }
+  })(),
+  storeAllMeasurements: safeGetLocalStorage<boolean>("storeAllMeasurements", false),
   alerts: safeGetLocalStorage<AlertItem[]>("gasAlerts", []),
   activeAlerts: [],
   visibleGases: defaultVisibleGases,
@@ -127,6 +156,20 @@ export const useLiveStore = create<LiveState>((set) => ({
     }
   },
 
+  setMeasurementEnabledState: (values) => {
+    const normalized = GAS_KEYS.reduce((acc, key) => {
+      const rawValue = values[key];
+      acc[key] = typeof rawValue === "boolean" ? rawValue : true;
+      return acc;
+    }, {} as MeasurementEnabledRecord);
+
+    set({ measurementEnabled: normalized });
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("gasMeasurementEnabled", JSON.stringify(normalized));
+    }
+  },
+
   updateThreshold: (gas, value) => {
     set((state) => {
       const current = state.thresholds[gas];
@@ -151,6 +194,26 @@ export const useLiveStore = create<LiveState>((set) => ({
 
       return { alarmEnabled };
     });
+  },
+
+  setMeasurementEnabledForGas: (gas, enabled) => {
+    set((state) => {
+      const measurementEnabled = { ...state.measurementEnabled, [gas]: enabled };
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("gasMeasurementEnabled", JSON.stringify(measurementEnabled));
+      }
+
+      return { measurementEnabled };
+    });
+  },
+
+  setStoreAllMeasurements: (value) => {
+    set({ storeAllMeasurements: value });
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("storeAllMeasurements", JSON.stringify(value));
+    }
   },
 
   setAlerts: (alerts) => {

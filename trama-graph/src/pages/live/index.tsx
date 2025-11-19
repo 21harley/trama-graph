@@ -71,6 +71,8 @@ function LivePageContent() {
   const resetAlertsState = useLiveStore((state) => state.resetAlertsState);
   const thresholds = useLiveStore((state) => state.thresholds);
   const alarmEnabled = useLiveStore((state) => state.alarmEnabled);
+  const measurementEnabled = useLiveStore((state) => state.measurementEnabled);
+  const storeAllMeasurements = useLiveStore((state) => state.storeAllMeasurements);
   const backendBlocked = useLiveStore((state) => state.backendBlocked);
   const incrementBackendFailure = useLiveStore((state) => state.incrementBackendFailure);
   const resetBackendFailure = useLiveStore((state) => state.resetBackendFailure);
@@ -198,7 +200,8 @@ function LivePageContent() {
     }
 
     try {
-      await fetch("http://localhost:3000/api/v1/measurements/batch", {
+      const query = `?storeAll=${storeAllMeasurements ? "true" : "false"}`;
+      await fetch(`http://localhost:3000/api/v1/measurements/batch${query}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -210,7 +213,7 @@ function LivePageContent() {
       console.error("Error enviando mediciones al backend:", error);
       incrementBackendFailure();
     }
-  }, [backendBlocked, incrementBackendFailure, resetBackendFailure]);
+  }, [backendBlocked, incrementBackendFailure, resetBackendFailure, storeAllMeasurements]);
 
   const readSerial = async (port: SerialPort) => {
     const readable = port.readable as ReadableStream<Uint8Array> | null;
@@ -313,7 +316,7 @@ function LivePageContent() {
           for (const [gasKey, value] of gasEntries) {
             const gasId = GAS_ID_MAP[gasKey];
             if (!gasId) continue;
-
+            if (!measurementEnabled[gasKey as GasKey]) continue;
             const thresholdValue = thresholds[gasKey as GasKey] ?? DEFAULT_THRESHOLD;
 
             batch.push({
@@ -370,26 +373,56 @@ function LivePageContent() {
   };
 
   return (
-    <div className="w-[95%] grid place-items-center ">
-      <div className="w-[95%]">
-        <ControlPanel
-          onDownloadLogs={downloadLogs}
-          onConnectArduino={connectArduino}
-          onDisconnectArduino={disconnectArduino}
-          onResetSimulation={resetSimulation}
-          isConnected={!!portRef.current}
-          showDownloadButton={!backendBlocked || backendFailures >= 5}
-        />
+    <>
+      <style>
+        {`
+          .live-scroll-root,
+          .live-scroll-root * {
+            scrollbar-width: thin;
+            scrollbar-color: #38bdf8 rgba(15, 23, 42, 0.65);
+          }
 
-        <GasChart
-          data={data}
-          minTime={minTime}
-          maxTime={maxTime}
-          visibleGases={visibleGases}
-        />
+          .live-scroll-root ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+          }
 
-        <ToastContainer position="bottom-right" autoClose={3000} />
+          .live-scroll-root ::-webkit-scrollbar-track {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.6));
+            border-radius: 999px;
+          }
+
+          .live-scroll-root ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.85), rgba(99, 102, 241, 0.85));
+            border-radius: 999px;
+          }
+
+          .live-scroll-root ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 1), rgba(99, 102, 241, 1));
+          }
+        `}
+      </style>
+      <div className="live-scroll-root w-[95%] grid place-items-center ">
+        <div className="w-[95%]">
+          <ControlPanel
+            onDownloadLogs={downloadLogs}
+            onConnectArduino={connectArduino}
+            onDisconnectArduino={disconnectArduino}
+            onResetSimulation={resetSimulation}
+            isConnected={!!portRef.current}
+            showDownloadButton={!backendBlocked || backendFailures >= 5}
+          />
+
+          <GasChart
+            data={data}
+            minTime={minTime}
+            maxTime={maxTime}
+            visibleGases={visibleGases}
+          />
+
+          <ToastContainer position="bottom-right" autoClose={3000} />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

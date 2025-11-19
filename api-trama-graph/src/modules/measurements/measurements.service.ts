@@ -10,17 +10,31 @@ export type MeasurementsBatchResult = {
   alarmsTriggered: number;
 };
 
+export type RegisterMeasurementsOptions = {
+  storeAll?: boolean;
+};
+
 export type ListMeasurementsParams = {
   gasId?: number;
   start?: Date;
   end?: Date;
   threshold?: number;
   thresholdOperator?: "gte" | "lte" | "eq";
+  measurement?: number;
+  measurementOperator?: "gte" | "lte";
 };
 
 export type MeasurementWithRelations = Awaited<ReturnType<typeof prisma.medicion.findMany>>;
 
-export async function listMeasurements({ gasId, start, end, threshold, thresholdOperator = "gte" }: ListMeasurementsParams): Promise<MeasurementWithRelations> {
+export async function listMeasurements({
+  gasId,
+  start,
+  end,
+  threshold,
+  thresholdOperator = "gte",
+  measurement,
+  measurementOperator = "gte",
+}: ListMeasurementsParams): Promise<MeasurementWithRelations> {
   const where: Prisma.MedicionWhereInput = {};
 
   if (typeof gasId === "number") {
@@ -41,6 +55,14 @@ export async function listMeasurements({ gasId, start, end, threshold, threshold
       where.umbral = { lte: threshold };
     } else {
       where.umbral = { gte: threshold };
+    }
+  }
+
+  if (typeof measurement === "number") {
+    if (measurementOperator === "lte") {
+      where.valor = { lte: measurement };
+    } else {
+      where.valor = { gte: measurement };
     }
   }
 
@@ -82,17 +104,23 @@ export async function deleteMeasurement(id: number): Promise<void> {
   });
 }
 
-export async function registerMeasurementsBatch(data: MeasurementInput[]): Promise<MeasurementsBatchResult> {
+export async function registerMeasurementsBatch(
+  data: MeasurementInput[],
+  options: RegisterMeasurementsOptions = {},
+): Promise<MeasurementsBatchResult> {
   if (data.length === 0) {
     return { inserted: 0, alarmsTriggered: 0 };
   }
+
+  const { storeAll = false } = options;
 
   const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     let alarmsTriggered = 0;
     let inserted = 0;
 
     for (const measurement of data) {
-      const shouldPersist = measurement.valor > measurement.umbral;
+      const exceededThreshold = measurement.valor > measurement.umbral;
+      const shouldPersist = storeAll || exceededThreshold;
       if (!shouldPersist) {
         continue;
       }
@@ -108,13 +136,15 @@ export async function registerMeasurementsBatch(data: MeasurementInput[]): Promi
 
       inserted += 1;
 
-      await registerAlarmBreach({
-        prisma: tx,
-        idTipoGas: measurement.id_type_gas,
-        measurementId: created.id,
-        umbral: measurement.umbral,
-      });
-      alarmsTriggered += 1;
+      if (exceededThreshold) {
+        await registerAlarmBreach({
+          prisma: tx,
+          idTipoGas: measurement.id_type_gas,
+          measurementId: created.id,
+          umbral: measurement.umbral,
+        });
+        alarmsTriggered += 1;
+      }
     }
 
     return { inserted, alarmsTriggered };

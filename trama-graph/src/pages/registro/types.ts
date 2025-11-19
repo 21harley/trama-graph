@@ -16,4 +16,5 @@ export type MeasurementRecord = {
 export type OptionalFilterVisibility = {
   gas: boolean;
   threshold: boolean;
+  measurement: boolean;
 };

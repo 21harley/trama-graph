@@ -7,6 +7,8 @@ type FiltersState = {
   gasId: string;
   threshold: string;
   thresholdOperator: string;
+  measurement: string;
+  measurementOperator: string;
 };
 
 type ControlPanelProps = {
@@ -150,6 +152,14 @@ export default function ControlPanel({
           />
           Filtro por umbral
         </label>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, color: "#cbd5f5", fontSize: 15 }}>
+          <input
+            type="checkbox"
+            checked={optionalFilters.measurement}
+            onChange={(event) => onToggleOptionalFilter("measurement", event.target.checked)}
+          />
+          Filtro por medición
+        </label>
       </div>
 
       <div style={inputsRowStyle}>
@@ -227,6 +237,36 @@ export default function ControlPanel({
                 </option>
                 <option value="eq" style={{ color: "#0f172a" }}>
                   Igual (=)
+                </option>
+              </select>
+            </div>
+          </>
+        ) : null}
+        {optionalFilters.measurement ? (
+          <>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, height: "68px" }}>
+              <label style={{ color: "#cbd5f5", fontSize: 14 }}>Medición</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={filters.measurement}
+                onChange={(event) => onFilterChange("measurement", event.target.value)}
+                style={{ ...inputStyle, minWidth: 160 }}
+                placeholder="Ej. 300"
+              />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, height: "68px" }}>
+              <label style={{ color: "#cbd5f5", fontSize: 14 }}>Comparación de medición</label>
+              <select
+                value={filters.measurementOperator}
+                onChange={(event) => onFilterChange("measurementOperator", event.target.value)}
+                style={{ ...selectBaseStyle, minWidth: 160 }}
+              >
+                <option value="gte" style={{ color: "#0f172a" }}>
+                  Mayor o igual (≥)
+                </option>
+                <option value="lte" style={{ color: "#0f172a" }}>
+                  Menor o igual (≤)
                 </option>
               </select>
             </div>

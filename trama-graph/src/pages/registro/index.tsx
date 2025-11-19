@@ -12,6 +12,8 @@ type FiltersState = {
   gasId: string;
   threshold: string;
   thresholdOperator: "gte" | "lte" | "eq";
+  measurement: string;
+  measurementOperator: "gte" | "lte";
 };
 
 const API_BASE_URL = "http://localhost:3000/api/v1";
@@ -86,10 +88,13 @@ function RegistroPageContent() {
     gasId: "",
     threshold: "",
     thresholdOperator: "gte",
+    measurement: "",
+    measurementOperator: "gte",
   });
   const [optionalFilters, setOptionalFilters] = useState<OptionalFilterVisibility>({
     gas: false,
     threshold: false,
+    measurement: false,
   });
   const [records, setRecords] = useState<MeasurementRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -125,6 +130,12 @@ function RegistroPageContent() {
       if (optionalFilters.threshold && thresholdValue.length > 0) {
         params.append("threshold", thresholdValue);
         params.append("thresholdOperator", filters.thresholdOperator);
+      }
+
+      const measurementValue = filters.measurement.trim();
+      if (optionalFilters.measurement && measurementValue.length > 0) {
+        params.append("measurement", measurementValue);
+        params.append("measurementOperator", filters.measurementOperator);
       }
 
       const response = await fetch(`${API_BASE_URL}/measurements?${params.toString()}`);

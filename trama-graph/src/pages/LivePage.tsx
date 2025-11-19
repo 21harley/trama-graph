@@ -227,7 +227,7 @@ export default function LivePage() {
       startTimeRef.current = Date.now();
       readSerial(port);
     } catch (err) {
-      console.error("Error al conectar Arduino:", err);
+      console.error("Error al conectar SDGM-PRO:", err);
     }
   };
 
@@ -307,7 +307,7 @@ export default function LivePage() {
 
       <div style={{ marginLeft: 20, marginBottom: 20 }}>
         <button onClick={portRef.current ? disconnectArduino : connectArduino}>
-          {portRef.current ? "Desconectar Arduino" : "Conectar Arduino"}
+          {portRef.current ? "Desconectar SDGM-PRO" : "Conectar SDGM-PRO"}
         </button>
 
         <button style={{ marginLeft: 10 }} onClick={resetSimulation}>

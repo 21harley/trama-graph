@@ -63,7 +63,10 @@ export default function Layout() {
       </main>
 
       <Footer>
-        <span>Monitoreo ambiental en tiempo real</span>
+        <span>
+          SISTEMA DE DETECCIÓN AUTOMÁTICA DE GAS LICUADO DE PETROLEO (GLP) PARA LA
+          PREVENCIÓN DE FUGAS EN ENTORNOS DOMÉSTICOS, COMERCIALES E INDUSTRIALES.
+        </span>
       </Footer>
     </ViewportShell>
   );
