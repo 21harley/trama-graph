@@ -61,68 +61,12 @@ const defaultVisibleGases: Record<string, boolean> = {
   LPG: true,
 };
 
-const safeGetLocalStorage = <T,>(key: string, fallback: T): T => {
-  if (typeof window === "undefined") return fallback;
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return fallback;
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-};
-
 export const useLiveStore = create<LiveState>((set) => ({
-  thresholds: (() => {
-    const fallback = createDefaultThresholds();
-    if (typeof window === "undefined") return fallback;
-    try {
-      const raw = window.localStorage.getItem("gasThresholds");
-      if (!raw) return fallback;
-      const parsed = JSON.parse(raw) as Partial<Record<string, number>>;
-      return GAS_KEYS.reduce((acc, key) => {
-        const value = parsed[key];
-        acc[key] = typeof value === "number" && Number.isFinite(value) ? value : DEFAULT_THRESHOLD;
-        return acc;
-      }, {} as ThresholdRecord);
-    } catch {
-      return fallback;
-    }
-  })(),
-  alarmEnabled: (() => {
-    const fallback = createDefaultAlarmEnabled();
-    if (typeof window === "undefined") return fallback;
-    try {
-      const raw = window.localStorage.getItem("gasAlarmEnabled");
-      if (!raw) return fallback;
-      const parsed = JSON.parse(raw) as Partial<Record<string, boolean>>;
-      return GAS_KEYS.reduce((acc, key) => {
-        const value = parsed[key];
-        acc[key] = typeof value === "boolean" ? value : true;
-        return acc;
-      }, {} as AlarmEnabledRecord);
-    } catch {
-      return fallback;
-    }
-  })(),
-  measurementEnabled: (() => {
-    const fallback = createDefaultMeasurementEnabled();
-    if (typeof window === "undefined") return fallback;
-    try {
-      const raw = window.localStorage.getItem("gasMeasurementEnabled");
-      if (!raw) return fallback;
-      const parsed = JSON.parse(raw) as Partial<Record<string, boolean>>;
-      return GAS_KEYS.reduce((acc, key) => {
-        const value = parsed[key];
-        acc[key] = typeof value === "boolean" ? value : true;
-        return acc;
-      }, {} as MeasurementEnabledRecord);
-    } catch {
-      return fallback;
-    }
-  })(),
-  storeAllMeasurements: safeGetLocalStorage<boolean>("storeAllMeasurements", false),
-  alerts: safeGetLocalStorage<AlertItem[]>("gasAlerts", []),
+  thresholds: createDefaultThresholds(),
+  alarmEnabled: createDefaultAlarmEnabled(),
+  measurementEnabled: createDefaultMeasurementEnabled(),
+  storeAllMeasurements: false,
+  alerts: [],
   activeAlerts: [],
   visibleGases: defaultVisibleGases,
   backendFailures: 0,
@@ -137,9 +81,6 @@ export const useLiveStore = create<LiveState>((set) => ({
 
     set({ thresholds: normalized });
 
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("gasThresholds", JSON.stringify(normalized));
-    }
   },
 
   setAlarmEnabledState: (values) => {
@@ -150,10 +91,6 @@ export const useLiveStore = create<LiveState>((set) => ({
     }, {} as AlarmEnabledRecord);
 
     set({ alarmEnabled: normalized });
-
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("gasAlarmEnabled", JSON.stringify(normalized));
-    }
   },
 
   setMeasurementEnabledState: (values) => {
@@ -164,10 +101,6 @@ export const useLiveStore = create<LiveState>((set) => ({
     }, {} as MeasurementEnabledRecord);
 
     set({ measurementEnabled: normalized });
-
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("gasMeasurementEnabled", JSON.stringify(normalized));
-    }
   },
 
   updateThreshold: (gas, value) => {
@@ -175,10 +108,6 @@ export const useLiveStore = create<LiveState>((set) => ({
       const current = state.thresholds[gas];
       const nextValue = Number.isFinite(value) && value > 0 ? value : current;
       const thresholds = { ...state.thresholds, [gas]: nextValue };
-
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem("gasThresholds", JSON.stringify(thresholds));
-      }
 
       return { thresholds };
     });
@@ -188,10 +117,6 @@ export const useLiveStore = create<LiveState>((set) => ({
     set((state) => {
       const alarmEnabled = { ...state.alarmEnabled, [gas]: enabled };
 
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem("gasAlarmEnabled", JSON.stringify(alarmEnabled));
-      }
-
       return { alarmEnabled };
     });
   },
@@ -200,27 +125,16 @@ export const useLiveStore = create<LiveState>((set) => ({
     set((state) => {
       const measurementEnabled = { ...state.measurementEnabled, [gas]: enabled };
 
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem("gasMeasurementEnabled", JSON.stringify(measurementEnabled));
-      }
-
       return { measurementEnabled };
     });
   },
 
   setStoreAllMeasurements: (value) => {
     set({ storeAllMeasurements: value });
-
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("storeAllMeasurements", JSON.stringify(value));
-    }
   },
 
   setAlerts: (alerts) => {
     set({ alerts });
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("gasAlerts", JSON.stringify(alerts));
-    }
   },
 
   setActiveAlerts: (activeAlerts) => set({ activeAlerts }),
@@ -235,10 +149,6 @@ export const useLiveStore = create<LiveState>((set) => ({
 
   resetAlertsState: () => {
     set({ alerts: [], activeAlerts: [] });
-    if (typeof window !== "undefined") {
-      window.localStorage.removeItem("gasAlerts");
-      window.localStorage.removeItem("gasAlertLogs");
-    }
   },
 
   incrementBackendFailure: () =>

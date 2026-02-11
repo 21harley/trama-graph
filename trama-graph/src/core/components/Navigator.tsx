@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 const LINKS = [
   { to: "/live", label: "Monitoreo-live" },
   { to: "/registro", label: "Registro" },
+  { to: "/autores", label: "Autores" },
 ];
 
 export default function Navigator() {

@@ -75,6 +75,22 @@ Arduino  ──(Web Serial)──► Frontend ──(HTTP JSON)──► API ─
 
 ---
 
+## Autores
+
+Conoce a las personas detrás del sistema de monitoreo y visualización de gases:
+
+### John Harley Llanes Escobar
+- **Descripción**: Desarrolladora front-end enfocada en experiencias intuitivas.
+- **LinkedIn**: [www.linkedin.com/in/john-llanes-dev](https://www.linkedin.com/in/john-llanes-dev)
+- **GitHub**: [21harley](https://github.com/21harley)
+
+### Daniel Urbina
+- **Descripción**: Desarrolladora Full Stack
+- **LinkedIn**: [www.linkedin.com/in/danielurbina007](https://www.linkedin.com/in/danielurbina007)
+- **GitHub**: [DansPlaying](https://github.com/DansPlaying)
+
+---
+
 ## Readmes específicos
 
 - [`api-trama-graph/README.md`](api-trama-graph/README.md): detalles de requisitos backend, estructura Prisma, endpoints y manejo de cron.

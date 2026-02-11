@@ -166,11 +166,6 @@ function LivePageContent() {
 
     const line = `[${timeStr}] ALARMA → ${gas}: ${value} > ${thresholdVal}`;
     logsRef.current.push(line);
-    try {
-      localStorage.setItem("gasAlertLogs", JSON.stringify(logsRef.current));
-    } catch {
-      /* ignore */
-    }
 
     toast.warning(`⚠️ ${gas} superó el umbral (${value.toFixed(0)} > ${thresholdVal})`, {
       position: "bottom-right",
@@ -364,12 +359,6 @@ function LivePageContent() {
     resetAlertsState();
 
     logsRef.current = [];
-    try {
-      localStorage.removeItem("gasAlerts");
-      localStorage.removeItem("gasAlertLogs");
-    } catch {
-      /* ignore */
-    }
   };
 
   return (

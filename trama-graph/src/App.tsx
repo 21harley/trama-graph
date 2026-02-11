@@ -5,6 +5,7 @@ import LoaderPage from "./pages/LoaderPage.tsx";
 import LivePage from "./pages/live/index.tsx";
 import LivePages from "./pages/LivePage.tsx";
 import RegistroPage from "./pages/registro/index.tsx";
+import AutoresPage from "./pages/autores/index.tsx";
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="/live" element={<LivePage />} />
           <Route path="/livePages" element={<LivePages/>} />
           <Route path="/registro" element={<RegistroPage />} />
+          <Route path="/autores" element={<AutoresPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
