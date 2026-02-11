@@ -4,6 +4,7 @@ import { Outlet } from "react-router-dom";
 import Footer from "./Footer.tsx";
 import Header from "./Header.tsx";
 import Navigator from "./Navigator.tsx";
+import { useIntroGate } from "../hooks/useIntroGate";
 
 type ViewportShellProps = {
   children: ReactNode;
@@ -48,10 +49,13 @@ function ViewportShell({ children }: ViewportShellProps) {
 }
 
 export default function Layout() {
+  const gateStatus = useIntroGate();
+  const showNavigation = gateStatus === "allowed";
+
   return (
     <ViewportShell>
       <Header title="Trama Graph">
-        <Navigator />
+        {showNavigation ? <Navigator /> : null}
       </Header>
 
       <main className="app-main">
@@ -59,7 +63,10 @@ export default function Layout() {
       </main>
 
       <Footer>
-        <span>Monitoreo ambiental en tiempo real</span>
+        <span>
+          SISTEMA DE DETECCIÓN AUTOMÁTICA DE GAS LICUADO DE PETROLEO (GLP) PARA LA
+          PREVENCIÓN DE FUGAS EN ENTORNOS DOMÉSTICOS, COMERCIALES E INDUSTRIALES.
+        </span>
       </Footer>
     </ViewportShell>
   );

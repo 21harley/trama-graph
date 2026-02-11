@@ -1,10 +1,9 @@
 import { NavLink } from "react-router-dom";
 
 const LINKS = [
-  { to: "/", label: "Inicio" },
   { to: "/live", label: "Monitoreo-live" },
   { to: "/registro", label: "Registro" },
-  { to: "/livePages", label: "Monitoreo-pages" },
+  { to: "/autores", label: "Autores" },
 ];
 
 export default function Navigator() {

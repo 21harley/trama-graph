@@ -42,16 +42,10 @@ export default function LivePage() {
     LPG: false,
   });
 
-  const [threshold, setThreshold] = useState<number>(() => {
-    const saved = localStorage.getItem("gasThreshold");
-    return saved ? Number(saved) : DEFAULT_THRESHOLD;
-  });
+  const [threshold, setThreshold] = useState<number>(DEFAULT_THRESHOLD);
   const [data, setData] = useState<ChartPoint[]>([]);
   const [pendingThreshold, setPendingThreshold] = useState<number>(threshold);
-  const [alerts, setAlerts] = useState<AlertItem[]>(() => {
-    const saved = localStorage.getItem("gasAlerts");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [activeAlerts, setActiveAlerts] = useState<ActiveAlert[]>([]);
 
   const maxTime = data.length ? data[data.length - 1].time : WINDOW_TIME;
@@ -96,23 +90,10 @@ export default function LivePage() {
 
   const pushAlert = (timeStr: string, gas: string, value: number, thresholdVal: number) => {
     const item: AlertItem = { time: timeStr, gas, value, threshold: thresholdVal };
-    setAlerts((prev) => {
-      const next = [...prev, item];
-      try {
-        localStorage.setItem("gasAlerts", JSON.stringify(next));
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
+    setAlerts((prev) => [...prev, item]);
 
     const line = `[${timeStr}] ALARMA → ${gas}: ${value} > ${thresholdVal}`;
     logsRef.current.push(line);
-    try {
-      localStorage.setItem("gasAlertLogs", JSON.stringify(logsRef.current));
-    } catch {
-      /* ignore */
-    }
   };
 
   const downloadLogs = () => {
@@ -227,7 +208,7 @@ export default function LivePage() {
       startTimeRef.current = Date.now();
       readSerial(port);
     } catch (err) {
-      console.error("Error al conectar Arduino:", err);
+      console.error("Error al conectar SDGM-PRO:", err);
     }
   };
 
@@ -254,17 +235,10 @@ export default function LivePage() {
     setAlerts([]);
     setActiveAlerts([]);
     logsRef.current = [];
-    try {
-      localStorage.removeItem("gasAlerts");
-      localStorage.removeItem("gasAlertLogs");
-    } catch {
-      /* ignore */
-    }
   };
 
   const updateThreshold = () => {
     setThreshold(pendingThreshold);
-    localStorage.setItem("gasThreshold", String(pendingThreshold));
   };
 
   return (
@@ -307,7 +281,7 @@ export default function LivePage() {
 
       <div style={{ marginLeft: 20, marginBottom: 20 }}>
         <button onClick={portRef.current ? disconnectArduino : connectArduino}>
-          {portRef.current ? "Desconectar Arduino" : "Conectar Arduino"}
+          {portRef.current ? "Desconectar SDGM-PRO" : "Conectar SDGM-PRO"}
         </button>
 
         <button style={{ marginLeft: 10 }} onClick={resetSimulation}>

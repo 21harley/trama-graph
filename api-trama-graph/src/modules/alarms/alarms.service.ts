@@ -4,6 +4,48 @@ import { prisma } from "../../libs/prisma";
 import { AppError } from "../../shared/errors/app-error";
 
 const DEFAULT_ALARM_STATE = "abierta";
+const CLOSED_ALARM_STATE = "cerrada";
+const ALARM_INACTIVITY_TIMEOUT_MS = 2000;
+
+type InactivityTimerEntry = {
+  timeout: NodeJS.Timeout;
+  alarmId: number;
+};
+
+const alarmInactivityTimers = new Map<number, InactivityTimerEntry>();
+
+function clearAlarmInactivityTimer(idTipoGas: number) {
+  const existing = alarmInactivityTimers.get(idTipoGas);
+  if (existing) {
+    clearTimeout(existing.timeout);
+    alarmInactivityTimers.delete(idTipoGas);
+  }
+}
+
+function scheduleAlarmClosure(idTipoGas: number, alarmId: number) {
+  clearAlarmInactivityTimer(idTipoGas);
+
+  const timeout = setTimeout(async () => {
+    try {
+      await prisma.alarma.updateMany({
+        where: { id: alarmId, estado: DEFAULT_ALARM_STATE },
+        data: { estado: CLOSED_ALARM_STATE },
+      });
+    } catch (error) {
+      console.error(
+        `Error al cerrar la alarma ${alarmId} para el gas ${idTipoGas} tras inactividad:`,
+        error,
+      );
+    } finally {
+      const current = alarmInactivityTimers.get(idTipoGas);
+      if (current && current.alarmId === alarmId) {
+        alarmInactivityTimers.delete(idTipoGas);
+      }
+    }
+  }, ALARM_INACTIVITY_TIMEOUT_MS);
+
+  alarmInactivityTimers.set(idTipoGas, { alarmId, timeout });
+}
 
 export type AlarmRegistrationInput = {
   prisma: Prisma.TransactionClient | PrismaClient;
@@ -37,7 +79,7 @@ export async function registerAlarmBreach({
   });
 
   if (!existingAlarm) {
-    await prisma.alarma.create({
+    const created = await prisma.alarma.create({
       data: {
         idTipoGas,
         nMedidas: 1,
@@ -46,10 +88,12 @@ export async function registerAlarmBreach({
         umbralReferencia: umbral,
       },
     });
+
+    scheduleAlarmClosure(idTipoGas, created.id);
     return;
   }
 
-  await prisma.alarma.update({
+  const updated = await prisma.alarma.update({
     where: { id: existingAlarm.id },
     data: {
       nMedidas: existingAlarm.nMedidas + 1,
@@ -57,6 +101,8 @@ export async function registerAlarmBreach({
       actualizadaEn: new Date(),
     },
   });
+
+  scheduleAlarmClosure(idTipoGas, updated.id);
 }
 
 export async function listAlarms({ gasId, start, end, states }: ListAlarmsParams): Promise<AlarmWithRelations> {

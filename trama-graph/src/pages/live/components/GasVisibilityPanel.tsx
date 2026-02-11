@@ -21,25 +21,17 @@ export default function GasVisibilityPanel() {
       }}
     >
       <div>
-        <h3
-          style={{
-            marginBottom: 16,
-            fontSize: "1.2rem",
-            fontWeight: 600,
-          }}
-        >
-          Mostrar/Ocultar Gases:
-        </h3>
         <div
           style={{
             display: "flex",
             gap: "12px",
-            marginTop: 8,
+            marginTop: 4,
             flexWrap: "wrap",
           }}
         >
           {Object.entries(gasNames).map(([gas, name]) => (
             <label
+            title="Mostrar/Ocultar Gases"
               key={gas}
               style={{
                 display: "flex",
@@ -47,7 +39,7 @@ export default function GasVisibilityPanel() {
                 gap: "12px",
                 cursor: "pointer",
                 fontSize: 14,
-                padding: "8px 12px",
+                padding: "4px 6px",
                 borderRadius: 8,
                 backgroundColor: visibleGases[gas]
                   ? `${gasColors[gas]}15`
@@ -72,8 +64,8 @@ export default function GasVisibilityPanel() {
                 checked={visibleGases[gas]}
                 onChange={() => toggleGasVisibility(gas)}
                 style={{
-                  width: 18,
-                  height: 18,
+                  width: 14,
+                  height: 14,
                   cursor: "pointer",
                   accentColor: gasColors[gas],
                   transform: "scale(1.2)",
